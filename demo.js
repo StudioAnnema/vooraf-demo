@@ -537,7 +537,7 @@ function applyOwn() {
 }
 ownPanel.addEventListener("submit", e => {
   e.preventDefault();
-  if (applyOwn()) { ownPanel.hidden = true; ownBtn.setAttribute("aria-expanded", "false"); document.getElementById("phone").scrollIntoView({ behavior: "smooth", block: "center" }); }
+  if (applyOwn()) { ownPanel.hidden = true; ownBtn.setAttribute("aria-expanded", "false"); if (matchMedia("(max-width: 880px)").matches) document.getElementById("phone").scrollIntoView({ behavior: "smooth", block: "start" }); }
 });
 ownBtn.onclick = () => {
   const open = ownPanel.hidden;
@@ -586,7 +586,8 @@ function segment(id, attr, set) {
 }
 segment("intakeSeg", "intake", v => { intake = v; runChat(); });
 document.querySelectorAll("[data-scenario]").forEach(b => b.onclick = () => {
-  document.getElementById("phone").scrollIntoView({ behavior: "smooth", block: "center" });
+  // Alleen op smalle schermen naar de telefoon scrollen; op desktop staat hij al in beeld.
+  if (matchMedia("(max-width: 880px)").matches) document.getElementById("phone").scrollIntoView({ behavior: "smooth", block: "start" });
   runChat({ consent: "Akkoord", ...PRESETS[b.dataset.scenario] });
 });
 

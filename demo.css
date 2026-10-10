@@ -175,3 +175,20 @@
 .seg button { flex: 1; padding: 10px 12px; }
 .ctrl-row { display: block; margin-top: 22px; }
 @media (max-width: 880px) { .demo-grid, .demo-intro { grid-template-columns: minmax(0, 1fr); } }
+
+/* Indeling: telefoon links en blijft bovenin in beeld; rechts instellingen en praktijkscherm */
+.demo-intro { grid-template-columns: minmax(0, 1fr); padding-bottom: 20px; }
+.demo-intro .lead { max-width: 46em; }
+.demo-grid { grid-template-columns: 470px minmax(0, 1fr); grid-template-areas: "phone controls" "phone dash"; align-items: start; row-gap: 28px; }
+.phone-wrap { grid-area: phone; position: sticky; top: 16px; align-self: start; }
+.phone { height: min(820px, calc(100vh - 70px)); min-height: 560px; }
+.controls-col { grid-area: controls; }
+.dash { grid-area: dash; }
+@media (max-width: 880px) {
+  .demo-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "controls" "phone" "dash"; }
+  .phone-wrap { position: static; }
+  .phone { height: 680px; }
+}
+.demo-intro { padding-top: 8px; padding-bottom: 18px; }
+.demo-intro h1 { font-size: clamp(1.9rem, 3.2vw, 2.6rem); margin-bottom: .3em; }
+.demo-intro .lead { font-size: 1.08rem; }
