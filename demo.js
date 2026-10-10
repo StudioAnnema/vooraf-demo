@@ -71,12 +71,24 @@ function addMsg(html, who = "bot", cls = "") {
   chat.scrollTop = chat.scrollHeight;
   return el;
 }
+const SPEEDS = { rustig: 1, normaal: 0.5, snel: 0.15 };
+let speed = "rustig", intake = "link";
+
 async function botSay(html, cls, run) {
   const t = addMsg("typt…", "bot", "typing");
-  await sleep(auto ? 160 : 500);
+  const len = html.replace(/<[^>]+>/g, "").length;
+  const ms = auto ? Math.min(800 + len * 16, 3200) * SPEEDS[speed] : Math.min(350 + len * 5, 1200);
+  await sleep(ms);
   if (run !== runId) { t.remove(); throw "cancel"; }
   t.className = `msg bot ${cls || ""}`; t.innerHTML = html;
   chat.scrollTop = chat.scrollHeight;
+}
+
+const STEPS = ["Over je klacht", "Vragen over je klachtgebied", "Je gezondheid", "Afronden"];
+function setProgress(step, label, done = false) {
+  $("#progLabel").textContent = done ? "Klaar" : label || STEPS[step - 1];
+  $("#progStep").textContent = done ? "✓" : `Stap ${step} van 4`;
+  $("#progBar").style.width = done ? "100%" : `${(step - 1) * 25 + 8}%`;
 }
 
 // ---------- Chat engine ----------
@@ -135,7 +147,7 @@ function autoValue(q) {
 
 async function answer(q, run) {
   let v;
-  if (auto) { await sleep(180); v = autoValue(q); }
+  if (auto) { await sleep((q.type === "multi" ? 2200 : 1400) * SPEEDS[speed]); v = autoValue(q); }
   else v = await askUI(q);
   if (run !== runId) throw "cancel";
   input.innerHTML = "";
@@ -143,38 +155,83 @@ async function answer(q, run) {
   return v;
 }
 
+// Korte, menselijke reacties op sommige antwoorden
+function reaction(q, a) {
+  const v = a[q.id];
+  if (q.id === "pijn") return +v >= 7 ? "Dat is flink. Vervelend dat je zoveel pijn hebt." : +v <= 3 ? "Gelukkig is de pijn nog redelijk te doen." : "Duidelijk, dank je.";
+  if (q.id === "duur" && v === "Langer dan 3 maanden") return "Dat is al een tijd. Goed dat je er nu hulp bij zoekt.";
+  if (q.id === "angst" && v === "Ja, erg") return "Heel begrijpelijk. Een fysiotherapeut kan je helpen om weer met vertrouwen te bewegen.";
+  if (q.id === "stemming" && v === "Vaak") return "Dank je dat je dat deelt. De fysiotherapeut neemt het mee.";
+  if (q.id === "klacht") return "Dank je. Dan wil ik eerst wat meer weten over hoe het begon.";
+  return null;
+}
+
 async function runChat(preset = null) {
   const run = ++runId;
   auto = preset;
   chat.innerHTML = ""; input.innerHTML = "";
+  setProgress(1, "Welkom");
   const a = {};
   try {
-    await botSay(`Hoi! 👋 Ik ben de digitale assistent van <b>${brand.name}</b>. Ik stel je vragen over je klacht, zodat de fysiotherapeut je meteen goed kan helpen. Het duurt ongeveer 5 minuten.`, "", run);
+    if (intake === "link") {
+      // Patiënt kreeg een persoonlijke link van de praktijk: naam en geboortedatum zijn al bekend.
+      const pt = preset ? { naam: preset.naam, geb: preset.geb } : { naam: "Alex Jansen", geb: "1988-07-21" };
+      Object.assign(a, pt, { age: ageFrom(pt.geb), _known: true });
+      await botSay(`Hoi ${esc(first(a.naam))}! 👋 Fijn dat je je hebt aangemeld bij <b>${brand.name}</b>. Ik ben de digitale assistent van de praktijk.`, "", run);
+      await botSay("Ik stel je wat vragen over je klacht, zodat de fysiotherapeut je meteen goed kan helpen. Het duurt ongeveer 5 minuten, en je kunt gewoon op de knoppen tikken.", "", run);
+    } else {
+      await botSay(`Hoi! 👋 Ik ben de digitale assistent van <b>${brand.name}</b>. Ik stel je wat vragen over je klacht, zodat de fysiotherapeut je meteen goed kan helpen. Het duurt ongeveer 5 minuten.`, "", run);
+    }
     await botSay(`Je antwoorden worden versleuteld opgeslagen en alleen gedeeld met ${brand.name}. Ga je akkoord?`, "", run);
     const c = await answer({ id: "consent", type: "single", options: ["Akkoord", "Liever niet"] }, run);
     if (c !== "Akkoord") { await botSay(`Geen probleem. Je kunt de praktijk ook bellen op ${brand.phone}.`, "", run); return; }
+    if (a._known) {
+      await botSay(`Even ter controle: is je geboortedatum <b>${fmtDate(a.geb)}</b>?`, "", run);
+      const ok = await answer({ id: "check", type: "single", options: ["Ja, dat klopt", "Nee"] }, run);
+      if (ok !== "Ja, dat klopt") {
+        await botSay("Geen probleem, dan vraag ik je gegevens even opnieuw.", "", run);
+        delete a.naam; delete a.geb; a._known = false;
+      }
+    }
 
+    const firstRegionQ = () => (Q_REGION[a.regioKey] || [])[0];
     for (let i = 0; ; i++) {
       const list = questionFlow(a);
       if (i >= list.length) break;
       const q = list[i];
       if (q.show && !safe(q.show, a)) continue;
       const text = typeof q.q === "function" ? q.q(a) : q.q;
-      if (q.id === Q_GENERAL[0].id) await botSay("Nu een paar algemene vragen over je gezondheid. Die stellen we iedereen.", "", run);
-      await botSay(q.id === "geb" ? `Dank je, ${esc(first(a.naam))}. ${text}` : text, "", run);
+      if (q === firstRegionQ()) {
+        setProgress(2, `Vragen over je ${a.regio.toLowerCase()}`);
+        if (a.regioKey !== "anders") {
+          await botSay(`Dan nu een paar vragen die specifiek bij je <b>${a.regio.toLowerCase()}</b> horen.`, "", run);
+          await botSay("Sommige vragen klinken misschien wat vreemd, maar we stellen ze iedereen voor de zekerheid.", "", run);
+        }
+      }
+      if (q.id === Q_GENERAL[0].id) { setProgress(3); await botSay("Goed bezig! Nu een paar algemene vragen over je gezondheid. Die stellen we iedereen.", "", run); }
+      if (q.id === Q_PROGNOSIS[0].id) { setProgress(4); await botSay("Bijna klaar. Nog een paar vragen over hoe het met je gaat. Daarmee kan de fysiotherapeut beter inschatten wat je nodig hebt.", "", run); }
+      await botSay(q.id === "geb" && a.naam ? `Dank je, ${esc(first(a.naam))}. ${text}` : text, "", run);
       a[q.id] = await answer(q, run);
       if (q.id === "geb") {
         a.age = ageFrom(a.geb);
         if (a.age < 16) await botSay("Omdat je jonger bent dan 16, vragen we je dit samen met je ouder of verzorger in te vullen.", "", run);
       }
-      if (q.id === "regio") {
-        a.regioKey = regionKey(a.regio);
-        if (a.regioKey !== "anders") await botSay(`Ik stel je nu een paar vragen die specifiek bij je <b>${a.regio.toLowerCase()}</b> horen.`, "", run);
-      }
+      if (q.id === "regio") a.regioKey = regionKey(a.regio);
       if (q.stop && safe(q.stop, a)) { a._stopped = true; break; }
+      const re = reaction(q, a);
+      if (re) await botSay(re, "", run);
     }
 
     const r = evaluate(a);
+    if (!a._stopped) {
+      await botSay(`Dank je wel! Even op een rij:<ul>
+        <li><b>Klacht:</b> ${esc(a.regio)}${a.klacht && a.klacht !== "—" ? " — " + esc(a.klacht) : ""}</li>
+        <li><b>Sinds:</b> ${esc((a.duur || "").toLowerCase())}</li>
+        <li><b>Pijn:</b> ${esc(a.pijn)} van de 10</li>
+        ${a.doel && a.doel !== "—" ? `<li><b>Je doel:</b> ${esc(a.doel)}</li>` : ""}</ul>`, "summary", run);
+      await botSay("Ik zet je antwoorden klaar voor de fysiotherapeut…", "", run);
+    }
+    setProgress(4, "", true);
     const out = patientOutcome(r, a);
     await botSay(out.text, out.cls, run);
     let slot = null;
@@ -407,6 +464,14 @@ function setBrand(key) {
   runChat();
 }
 document.querySelectorAll(".brand-btn").forEach(b => b.onclick = () => setBrand(b.dataset.brand));
+function segment(id, attr, set) {
+  document.querySelectorAll(`#${id} button`).forEach(b => b.onclick = () => {
+    document.querySelectorAll(`#${id} button`).forEach(x => x.classList.toggle("active", x === b));
+    set(b.dataset[attr]);
+  });
+}
+segment("intakeSeg", "intake", v => { intake = v; runChat(); });
+segment("speedSeg", "speed", v => { speed = v; });
 document.querySelectorAll("[data-scenario]").forEach(b => b.onclick = () => {
   document.getElementById("phone").scrollIntoView({ behavior: "smooth", block: "center" });
   runChat({ consent: "Akkoord", ...PRESETS[b.dataset.scenario] });

@@ -27,8 +27,8 @@ const NONE = "Geen van deze";
 // type: single | multi | text | date. show(a) bepaalt of een vraag gesteld wordt.
 // stop(a) = true → vragenlijst stopt direct (spoedsignaal).
 const Q_START = [
-  { id: "naam", type: "text", q: "Wat is je voor- en achternaam?", ph: "Bijv. Sanne de Vries" },
-  { id: "geb", type: "date", q: "Wat is je geboortedatum?", src: "dossier" },
+  { id: "naam", type: "text", q: "Wat is je voor- en achternaam?", ph: "Bijv. Sanne de Vries", show: a => !a._known },
+  { id: "geb", type: "date", q: "Wat is je geboortedatum?", src: "dossier", show: a => !a._known },
   { id: "regio", type: "single", q: "Waar heb je vooral last van?", options: Object.values(REGIONS) },
   { id: "klacht", type: "text", q: "Beschrijf je klacht in een paar woorden.", ph: "Bijv. pijn onderin mijn rug na verhuizen", src: "dossier" },
   { id: "duur", type: "single", q: "Hoe lang heb je deze klacht al?", options: ["Korter dan 1 week", "1 tot 6 weken", "6 tot 12 weken", "Langer dan 3 maanden"], src: "dossier" },
