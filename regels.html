@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vooraf — vragen en regels</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@500&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+  .doc { max-width: 1160px; margin: 0 auto; padding: 16px 24px 80px; }
+  .doc h2 { margin-top: 56px; }
+  .doc h3 { margin: 32px 0 10px; }
+  .tbl-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+  table { width: 100%; border-collapse: collapse; font-size: .95rem; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-family: var(--mono); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); font-weight: 500; background: #F6F2EA; }
+  tr:last-child td { border-bottom: 0; }
+  td.opts { color: var(--ink-soft); font-size: .88rem; }
+  td.check { width: 120px; }
+  .tag { display: inline-block; font-family: var(--mono); font-size: .66rem; letter-spacing: .06em; text-transform: uppercase; padding: 2px 6px; border-radius: 3px; background: #ECE6D9; color: var(--ink-soft); margin: 2px 4px 0 0; }
+  .tag.stop { background: var(--t-spoed); color: #fff; }
+  .tag.aanv { background: #FAEFD9; color: #8A5A0E; }
+  .src-list { list-style: none; padding: 0; margin: 0; }
+  .src-list li { padding: 8px 0; border-bottom: 1px dashed var(--line); }
+  .warnbox { background: #FAEFD9; border: 1px solid #EBD3A3; border-radius: 10px; padding: 18px 20px; margin: 24px 0; }
+  .toc { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0 0; }
+  .toc a { font: 600 .9rem var(--body); text-decoration: none; padding: 7px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); }
+  .toc a:hover { border-color: var(--ink); }
+  @media print {
+    .topbar, .toc, .no-print { display: none; }
+    body { background: #fff; font-size: 12px; }
+    .tbl-wrap { overflow: visible; }
+    h2 { page-break-before: always; }
+  }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a href="index.html" class="logo">Vooraf<span class="logo-dot"></span></a>
+  <a href="demo.html" class="btn btn-small btn-ghost">Terug naar de demo</a>
+</header>
+
+<main class="doc">
+  <p class="mono label">Ter validatie door een fysiotherapeut</p>
+  <h1>Vragen en screeningsregels</h1>
+  <p class="lead">Dit is alles wat de bot vraagt en concludeert. De pagina wordt automatisch opgebouwd uit hetzelfde bestand dat de bot gebruikt. Wat hier staat, is dus precies wat de bot doet.</p>
+
+  <div class="warnbox">
+    <strong>Status: concept, niet klinisch gevalideerd.</strong> De regels zijn gebaseerd op de KNGF-richtlijnen hieronder. Voor de schouder en voor sommige spoedbeelden (zoals meningitis, hartklachten en trombose) heb ik geen actuele KNGF-praktijkrichtlijn gevonden. Die regels zijn gemarkeerd als <span class="tag aanv">aanvulling</span> en moeten extra goed getoetst worden. Print deze pagina en vink per regel af of je akkoord bent.
+  </div>
+
+  <button class="btn no-print" onclick="window.print()">Printen voor review</button>
+
+  <nav class="toc" id="toc"></nav>
+
+  <h2>Bronnen</h2>
+  <ul class="src-list" id="sources"></ul>
+
+  <h2 id="h-flow">Opbouw van de vragenlijst</h2>
+  <p class="muted">De volgorde: start, vragen per klachtgebied, algemene gezondheid, prognose en afsluiting. Vragen met <span class="tag">voorwaardelijk</span> worden alleen gesteld als een eerder antwoord daar aanleiding toe geeft. Bij <span class="tag stop">stopt bij alarm</span> stopt de vragenlijst direct en krijgt de patiënt meteen het spoedadvies.</p>
+  <div id="questions"></div>
+
+  <h2 id="h-flags">Rode vlaggen en doorverwijzing</h2>
+  <p class="muted">Het hoogste niveau bepaalt de uitkomst. <b>Spoed</b>: direct huisarts of huisartsenpost, of 112. <b>Rood</b>: huisarts binnen de genoemde termijn, met een conceptbrief. <b>Oranje</b>: de fysiotherapeut belt eerst. <b>Info</b>: aandachtspunt voor de intake, verandert de uitkomst niet.</p>
+  <div id="flags"></div>
+
+  <h2 id="h-prog">Prognostische factoren</h2>
+  <p class="muted">Uit de KNGF-richtlijn Lage rugpijn (2021), hier toegepast op alle klachtgebieden. 0–1 factor: laag risico, 2–3: verhoogd, 4 of meer: hoog. Dit is een indicatie, geen gevalideerd instrument.</p>
+  <div class="tbl-wrap"><table><thead><tr><th>Factor</th><th>Akkoord / opmerking</th></tr></thead><tbody id="prog"></tbody></table></div>
+</main>
+
+<script src="screening-data.js"></script>
+<script>
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const srcTag = k => k ? `<span class="tag ${k === "aanvulling" ? "aanv" : ""}">${esc(k === "aanvulling" ? "aanvulling" : SRC[k].split(" (")[0].replace("KNGF-richtlijn ", ""))}</span>` : "";
+
+  document.getElementById("sources").innerHTML = Object.entries(SRC)
+    .map(([k, v]) => `<li>${srcTag(k)} ${esc(v)}</li>`).join("");
+
+  const groups = [
+    ["Start (alle patiënten)", Q_START],
+    ...Object.entries(Q_REGION).map(([k, qs]) => [`Klachtgebied: ${REGIONS[k]}`, qs, k]),
+    ["Algemene gezondheid (alle patiënten)", Q_GENERAL],
+    ["Prognose (alle patiënten)", Q_PROGNOSIS],
+    ["Afsluiting (alle patiënten)", Q_END],
+  ];
+  const toc = [];
+  document.getElementById("questions").innerHTML = groups.map(([title, qs], gi) => {
+    toc.push(`<a href="#g${gi}">${esc(title.replace("Klachtgebied: ", ""))}</a>`);
+    return `<h3 id="g${gi}">${esc(title)}</h3><div class="tbl-wrap"><table><thead><tr><th>Vraag aan patiënt</th><th>Antwoorden</th><th>Bron</th><th>Akkoord / opmerking</th></tr></thead><tbody>${
+      qs.map(q => `<tr><td>${esc(q.q)}<br>${q.show ? '<span class="tag">voorwaardelijk</span>' : ""}${q.stop ? '<span class="tag stop">stopt bij alarm</span>' : ""}</td>
+        <td class="opts">${q.options ? q.options.map(esc).join(" · ") + (q.type === "multi" ? " <i>(meerdere mogelijk)</i>" : "") : q.type === "date" ? "datum" : "vrije tekst"}</td>
+        <td>${srcTag(q.src)}</td><td class="check"></td></tr>`).join("")
+    }</tbody></table></div>`;
+  }).join("");
+  toc.push('<a href="#h-flags">Rode vlaggen</a>', '<a href="#h-prog">Prognose</a>');
+  document.getElementById("toc").innerHTML = toc.join("");
+
+  const regionsOrder = ["rug", "nek", "schouder", "knie", "heup", "enkel", "anders", "alle"];
+  document.getElementById("flags").innerHTML = regionsOrder.map(rk => {
+    const fs = FLAGS.filter(f => f.region === rk).sort((x, y) => LEVEL_RANK[y.level] - LEVEL_RANK[x.level]);
+    if (!fs.length) return "";
+    return `<h3>${rk === "alle" ? "Algemeen (alle klachtgebieden)" : esc(REGIONS[rk])}</h3><div class="tbl-wrap"><table><thead><tr><th>Niveau</th><th>Rode vlag / aandachtspunt</th><th>Criterium (uit antwoorden)</th><th>Bron</th><th>Akkoord / opmerking</th></tr></thead><tbody>${
+      fs.map(f => `<tr><td><span class="status ${f.level === "info" ? "" : f.level}" style="${f.level === "info" ? "background:#8A948F" : ""}">${f.level}${f.termijn ? " · " + f.termijn : ""}${f.call112 ? " · 112" : ""}</span></td>
+        <td><b>${esc(f.label)}</b><br><span class="muted" style="font-size:.85rem">${esc(f.cluster)}</span></td>
+        <td class="opts">${esc(f.crit)}</td><td>${srcTag(f.src)}</td><td class="check"></td></tr>`).join("")
+    }</tbody></table></div>`;
+  }).join("");
+
+  document.getElementById("prog").innerHTML = PROGNOSTIC.map(p => `<tr><td>${esc(p.label)}</td><td class="check"></td></tr>`).join("");
+</script>
+</body>
+</html>

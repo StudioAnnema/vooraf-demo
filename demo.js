@@ -1,5 +1,5 @@
 // Vooraf — klikbare demo. Alle logica draait lokaal in de browser; er wordt niets verstuurd.
-// LET OP: vragen en rode vlaggen zijn een voorbeeld en nog niet klinisch gevalideerd.
+// Vragen en regels staan in screening-data.js (concept, nog niet klinisch gevalideerd).
 
 const BRANDS = {
   duinen: { name: "Fysio De Duinen", short: "DD", phone: "071 – 123 45 67" },
@@ -8,87 +8,35 @@ const BRANDS = {
 };
 let brand = BRANDS.duinen;
 
-const STEPS = [
-  { id: "name", q: () => "Wat is je voor- en achternaam?", type: "text", placeholder: "Bijv. Sanne de Vries" },
-  { id: "age", q: a => `Dank je, ${first(a.name)}. Hoe oud ben je?`, type: "number", placeholder: "Leeftijd" },
-  { id: "area", q: () => "Waar heb je vooral last van?", options: ["Onderrug", "Nek", "Schouder", "Knie", "Iets anders"] },
-  { id: "duration", q: () => "Hoe lang heb je deze klachten al?", options: ["Korter dan 1 week", "1 tot 6 weken", "6 tot 12 weken", "Langer dan 3 maanden"] },
-  { id: "onset", q: () => "Hoe is het begonnen?", options: ["Na tillen of een verkeerde beweging", "Na een val of ongeluk", "Vanzelf, geleidelijk"] },
-  { id: "pain", q: () => "Hoeveel pijn heb je gemiddeld? 0 is geen pijn, 10 is de ergste pijn die je kunt voorstellen.", options: ["0","1","2","3","4","5","6","7","8","9","10"] },
-  { id: "radiation", q: () => "Straalt de pijn uit naar je been?", options: ["Nee, alleen in mijn rug", "Tot in bil of bovenbeen", "Tot onder de knie"] },
-  { id: "cauda", q: () => "Heb je sinds de klachten een doof gevoel rond je billen of schaamstreek, of moeite met plassen of ontlasting?", options: ["Nee", "Ja"], urgent: v => v === "Ja" },
-  { id: "weakness", q: () => "Worden je benen steeds slapper of krachtelozer?", options: ["Nee", "Ja"], urgent: v => v === "Ja" },
-  { id: "cancer", q: () => "Heb je nu of in het verleden kanker gehad?", options: ["Nee", "Ja", "Weet ik niet zeker"] },
-  { id: "weight", q: () => "Ben je de afgelopen maanden zonder duidelijke reden meer dan 5 kilo afgevallen?", options: ["Nee", "Ja"] },
-  { id: "night", q: () => "Heb je 's nachts pijn die niet minder wordt als je anders gaat liggen?", options: ["Nee", "Ja"] },
-  { id: "fever", q: () => "Heb je koorts, of voel je je algemeen ziek?", options: ["Nee", "Ja"] },
-  { id: "fear", q: () => "Ben je bang dat bewegen je rug verder beschadigt?", options: ["Nee", "Een beetje", "Ja, erg"] },
-  { id: "work", q: () => "Lukt werk en je dagelijkse dingen nog?", options: ["Ja, gewoon", "Met moeite", "Nee, ik zit thuis"] },
-  { id: "goal", q: () => "Laatste vraag: wat zou je graag weer willen kunnen?", type: "text", placeholder: "Bijv. weer hardlopen" },
-];
-
-const QUESTION_LABELS = {
-  name: "Naam", age: "Leeftijd", area: "Klachtgebied", duration: "Duur", onset: "Ontstaan", pain: "Pijn (NPRS)",
-  radiation: "Uitstraling", cauda: "Zadelanesthesie / mictie- of defecatiestoornis", weakness: "Progressief krachtverlies benen",
-  cancer: "Maligniteit in voorgeschiedenis", weight: "Onverklaard gewichtsverlies > 5 kg", night: "Houdingsonafhankelijke nachtpijn",
-  fever: "Koorts / algemeen ziek", fear: "Bewegingsangst", work: "Functioneren werk/ADL", goal: "Hulpvraag",
+const ROUTES = {
+  groen: { label: "Groen", title: "Pluis — geschikt voor fysiotherapie", conclusie: "PLUIS", indicatie: "Ja", action: "Intake inplannen; patiënt heeft zelf een tijd gekozen." },
+  oranje: { label: "Oranje", title: "Eerst even bellen", conclusie: "NADER TE BEPALEN (aandachtspunt)", indicatie: "Na telefonisch contact", action: "Fysiotherapeut belt patiënt vandaag om de aandachtspunten na te vragen en beslist daarna: intake of huisarts." },
+  rood: { label: "Rood", title: "Niet-pluis — eerst naar de huisarts", conclusie: "NIET-PLUIS", indicatie: "Nee, eerst medische beoordeling", action: "" },
+  spoed: { label: "Spoed", title: "Niet-pluis — direct medische zorg", conclusie: "NIET-PLUIS (SPOED)", indicatie: "Nee", action: "" },
 };
-
-// ---------- Triage ----------
-function triage(a) {
-  const age = parseInt(a.age, 10) || 0;
-  const red = [], yellow = [];
-  if (a.cauda === "Ja") red.push("Zadelanesthesie / mictie- of defecatiestoornis (verdenking cauda equina)");
-  if (a.weakness === "Ja") red.push("Progressief krachtverlies in de benen");
-  const cancer = a.cancer === "Ja";
-  if (cancer) red.push("Maligniteit in de voorgeschiedenis");
-  if (a.cancer === "Weet ik niet zeker") yellow.push("Onzeker over maligniteit in voorgeschiedenis — navragen");
-  if (a.weight === "Ja") red.push("Onverklaard gewichtsverlies");
-  if (a.night === "Ja") red.push("Houdingsonafhankelijke nachtpijn");
-  if (a.fever === "Ja") red.push("Koorts / algemeen ziek (verdenking infectie)");
-  if (a.onset === "Na een val of ongeluk" && age >= 60) red.push(`Trauma bij leeftijd ${age} (verdenking fractuur)`);
-  if (a.fear === "Ja, erg") yellow.push("Sterke bewegingsangst");
-  else if (a.fear === "Een beetje") yellow.push("Lichte bewegingsangst");
-  if (a.work === "Nee, ik zit thuis") yellow.push("Uitval werk/ADL");
-  if (a.duration === "Langer dan 3 maanden") yellow.push("Chronisch beloop (> 3 maanden)");
-
-  let level = "groen", reason = "";
-  if (a.cauda === "Ja" || a.weakness === "Ja") {
-    level = "spoed"; reason = "Neurologische alarmsignalen";
-  } else if (cancer && (a.weight === "Ja" || a.night === "Ja" || age >= 50)) {
-    level = "rood"; reason = "Maligniteit in voorgeschiedenis in combinatie met andere alarmsignalen";
-  } else if (a.fever === "Ja") {
-    level = "rood"; reason = "Mogelijke infectie";
-  } else if (a.onset === "Na een val of ongeluk" && age >= 60) {
-    level = "rood"; reason = "Mogelijke fractuur na trauma";
-  } else if (a.weight === "Ja" && a.night === "Ja") {
-    level = "rood"; reason = "Combinatie gewichtsverlies en nachtpijn";
-  } else if (cancer || a.cancer === "Weet ik niet zeker" || a.weight === "Ja" || a.night === "Ja"
-             || a.radiation === "Tot onder de knie" || a.onset === "Na een val of ongeluk") {
-    level = "oranje"; reason = "Eén aandachtspunt — eerst telefonisch afstemmen";
-  } else {
-    reason = "Geen alarmsignalen gevonden";
-  }
-  return { level, reason, red, yellow };
+const TERMIJN_TEXT = {
+  vandaag: "vandaag nog (buiten kantoortijden: huisartsenpost)",
+  "2 werkdagen": "binnen 2 werkdagen",
+  regulier: "via een gewone afspraak",
+};
+function routeAction(r) {
+  if (r.level === "rood") return `Patiënt is geadviseerd ${TERMIJN_TEXT[r.termijn]} contact op te nemen met de huisarts. Conceptbrief (DTF-bericht) staat klaar. Praktijk belt patiënt vandaag na.`;
+  if (r.level === "spoed") return r.call112
+    ? "Patiënt is geadviseerd direct 112 te bellen. Praktijk heeft een sms-melding gekregen en belt na."
+    : "Patiënt is geadviseerd direct de huisarts of huisartsenpost te bellen. Praktijk heeft een sms-melding gekregen en belt na.";
+  return ROUTES[r.level].action;
 }
 
-const ROUTES = {
-  groen: { label: "Groen", title: "Geschikt voor fysiotherapie", action: "Intake inplannen. Patiënt heeft zelf een tijd gekozen." },
-  oranje: { label: "Oranje", title: "Eerst even bellen", action: "Fysiotherapeut belt patiënt vandaag om de aandachtspunten na te vragen, daarna beslist de therapeut: intake of huisarts." },
-  rood: { label: "Rood", title: "Eerst naar de huisarts", action: "Patiënt is geadviseerd binnen 2 werkdagen de huisarts te bezoeken. Conceptverwijsbrief staat klaar. Praktijk belt patiënt vandaag na." },
-  spoed: { label: "Spoed", title: "Vandaag nog medische zorg", action: "Patiënt is geadviseerd direct de huisarts of huisartsenpost te bellen (bij acute verlamming 112). Praktijk heeft een sms-melding gekregen en belt na." },
-};
-
-function patientOutcome(level, a) {
-  const p = brand.name;
-  if (level === "spoed") return { cls: "alert", text:
-    `<b>Belangrijk, ${first(a.name)}.</b> Wat je beschrijft kan betekenen dat er druk op zenuwen staat. Dat moet <b>vandaag nog</b> bekeken worden.<br><br>📞 Bel nu je huisarts, of buiten kantoortijden de <b>huisartsenpost</b>.<br>🚑 Kun je je benen plotseling niet meer bewegen? Bel <b>112</b>.<br><br>${p} is op de hoogte en belt je ook.` };
-  if (level === "rood") return { cls: "warn", text:
-    `Dank je wel. Door een paar van je antwoorden is het verstandig dat je <b>eerst je huisarts</b> bezoekt, het liefst binnen 2 werkdagen. Dit is een voorzorg: de huisarts kan dingen onderzoeken die een fysiotherapeut niet kan.<br><br>Een fysiotherapeut van ${p} belt je vandaag om het toe te lichten. Je hoeft niets mee te nemen: wij sturen je huisarts een overzicht van je antwoorden.` };
-  if (level === "oranje") return { cls: "", text:
-    `Dank je wel! Een fysiotherapeut van ${p} bekijkt je antwoorden vandaag en <b>belt je</b> om samen de beste volgende stap te kiezen.` };
-  return { cls: "ok", text:
-    `Dank je wel! Je klachten passen goed bij fysiotherapie. Kies hieronder een moment voor je eerste afspraak.` };
+function patientOutcome(r, a) {
+  const p = brand.name, n = first(a.naam);
+  if (r.level === "spoed") return { cls: "alert", text: r.call112
+    ? `<b>Belangrijk, ${n}.</b> Wat je beschrijft moet <b>direct</b> door een arts bekeken worden.<br><br>🚑 <b>Bel nu 112.</b><br><br>${p} is op de hoogte en neemt later contact met je op.`
+    : `<b>Belangrijk, ${n}.</b> Wat je beschrijft moet <b>vandaag nog</b> door een arts bekeken worden.<br><br>📞 Bel nu je huisarts, of buiten kantoortijden de <b>huisartsenpost</b>.<br>🚑 Wordt het snel erger${a.regioKey === "rug" ? " of kun je je benen niet meer bewegen" : ""}? Bel <b>112</b>.<br><br>${p} is op de hoogte en belt je ook.` };
+  if (r.level === "rood") return { cls: "warn", text:
+    `Dank je wel, ${n}. Door een paar van je antwoorden is het verstandig dat je <b>eerst je huisarts</b> bezoekt, <b>${TERMIJN_TEXT[r.termijn]}</b>. Dit is een voorzorg: de huisarts kan onderzoeken doen die een fysiotherapeut niet kan.<br><br>Een fysiotherapeut van ${p} belt je vandaag om het toe te lichten.` };
+  if (r.level === "oranje") return { cls: "", text:
+    `Dank je wel, ${n}! Een fysiotherapeut van ${p} bekijkt je antwoorden vandaag en <b>belt je</b> om samen de beste volgende stap te kiezen.` };
+  return { cls: "ok", text: `Dank je wel, ${n}! Je klachten passen goed bij fysiotherapie. Kies hieronder een moment voor je eerste afspraak.` };
 }
 
 // ---------- Helpers ----------
@@ -97,10 +45,23 @@ const chat = $("#chat"), input = $("#chatInput");
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 function first(n) { return (n || "").trim().split(/\s+/)[0] || "daar"; }
 function esc(s) { return String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
-function today(offsetMin = 0) {
+function stamp(offsetMin = 0) {
   const d = new Date(Date.now() - offsetMin * 60000);
   return d.toLocaleDateString("nl-NL", { day: "numeric", month: "short" }) + " " + d.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" });
 }
+function fmtDate(iso) { const [y, m, d] = String(iso).split("-"); return d ? `${d}-${m}-${y}` : iso; }
+function ageFrom(iso) {
+  const b = new Date(iso), n = new Date();
+  let age = n.getFullYear() - b.getFullYear();
+  if (n < new Date(n.getFullYear(), b.getMonth(), b.getDate())) age--;
+  return age;
+}
+function show(v, q) {
+  if (Array.isArray(v)) return v.join(", ");
+  if (q && q.type === "date") return fmtDate(v);
+  return v ?? "—";
+}
+function regionKey(label) { return Object.keys(REGIONS).find(k => REGIONS[k] === label) || "anders"; }
 
 function addMsg(html, who = "bot", cls = "") {
   const el = document.createElement("div");
@@ -110,30 +71,54 @@ function addMsg(html, who = "bot", cls = "") {
   chat.scrollTop = chat.scrollHeight;
   return el;
 }
-async function botSay(html, cls = "", run) {
+async function botSay(html, cls, run) {
   const t = addMsg("typt…", "bot", "typing");
-  await sleep(auto ? 250 : 550);
+  await sleep(auto ? 160 : 500);
   if (run !== runId) { t.remove(); throw "cancel"; }
-  t.className = `msg bot ${cls}`; t.innerHTML = html;
+  t.className = `msg bot ${cls || ""}`; t.innerHTML = html;
   chat.scrollTop = chat.scrollHeight;
 }
 
 // ---------- Chat engine ----------
 let runId = 0, auto = null;
 
-function askUI(step, a) {
+function askUI(q) {
   return new Promise(resolve => {
     input.innerHTML = "";
-    if (step.options) {
-      step.options.forEach(o => {
+    if (q.type === "single") {
+      q.options.forEach(o => {
         const b = document.createElement("button");
         b.className = "opt"; b.textContent = o;
         b.onclick = () => resolve(o);
         input.appendChild(b);
       });
+    } else if (q.type === "multi") {
+      const picked = new Set();
+      const next = document.createElement("button");
+      next.className = "opt-next"; next.textContent = "Verder →"; next.disabled = true;
+      const btns = q.options.map(o => {
+        const b = document.createElement("button");
+        b.className = "opt"; b.textContent = o; b.setAttribute("aria-pressed", "false");
+        b.onclick = () => {
+          if (picked.has(o)) picked.delete(o);
+          else {
+            if (o === NONE) picked.clear(); else picked.delete(NONE);
+            picked.add(o);
+          }
+          btns.forEach(x => { const on = picked.has(x.textContent); x.classList.toggle("on", on); x.setAttribute("aria-pressed", on); });
+          next.disabled = picked.size === 0;
+        };
+        input.appendChild(b);
+        return b;
+      });
+      next.onclick = () => resolve(q.options.filter(o => picked.has(o)));
+      input.appendChild(next);
     } else {
       const f = document.createElement("form");
-      f.innerHTML = `<input ${step.type === "number" ? 'type="number" min="1" max="110" inputmode="numeric"' : 'type="text"'} placeholder="${step.placeholder || ""}" aria-label="${esc(step.q(a))}" required><button type="submit">Stuur</button>`;
+      const today = new Date().toISOString().slice(0, 10);
+      f.innerHTML = q.type === "date"
+        ? `<input type="date" max="${today}" min="1910-01-01" aria-label="${esc(q.q)}" required><button type="submit">Stuur</button>`
+        : `<input type="text" placeholder="${esc(q.ph || "")}" aria-label="${esc(q.q)}" required><button type="submit">Stuur</button>`;
       f.onsubmit = e => { e.preventDefault(); const v = f.querySelector("input").value.trim(); if (v) resolve(v); };
       input.appendChild(f);
       if (!auto) f.querySelector("input").focus({ preventScroll: true });
@@ -141,13 +126,20 @@ function askUI(step, a) {
   });
 }
 
-async function answer(step, a, run) {
+function autoValue(q) {
+  if (auto[q.id] !== undefined) return auto[q.id];
+  if (q.type === "multi") return q.options.includes(NONE) ? [NONE] : [];
+  if (q.type === "single") return q.options[0];
+  return "—";
+}
+
+async function answer(q, run) {
   let v;
-  if (auto) { await sleep(320); v = step.id === "slot" ? step.options[0] : auto[step.id]; }
-  else v = await askUI(step, a);
+  if (auto) { await sleep(180); v = autoValue(q); }
+  else v = await askUI(q);
   if (run !== runId) throw "cancel";
   input.innerHTML = "";
-  addMsg(esc(v), "user");
+  addMsg(esc(show(v, q)), "user");
   return v;
 }
 
@@ -157,32 +149,41 @@ async function runChat(preset = null) {
   chat.innerHTML = ""; input.innerHTML = "";
   const a = {};
   try {
-    await botSay(`Hoi! 👋 Ik ben de digitale assistent van <b>${brand.name}</b>. Ik stel je een paar vragen over je klacht, zodat de fysiotherapeut je meteen goed kan helpen. Het duurt ongeveer 4 minuten.`, "", run);
+    await botSay(`Hoi! 👋 Ik ben de digitale assistent van <b>${brand.name}</b>. Ik stel je vragen over je klacht, zodat de fysiotherapeut je meteen goed kan helpen. Het duurt ongeveer 5 minuten.`, "", run);
     await botSay(`Je antwoorden worden versleuteld opgeslagen en alleen gedeeld met ${brand.name}. Ga je akkoord?`, "", run);
-    const c = await answer({ id: "consent", options: ["Akkoord", "Liever niet"], q: () => "" }, a, run);
-    if (c !== "Akkoord") {
-      await botSay(`Geen probleem. Je kunt de praktijk ook bellen op ${brand.phone}.`, "", run);
-      return;
-    }
-    for (const step of STEPS) {
-      await botSay(step.q(a), "", run);
-      a[step.id] = await answer(step, a, run);
-      if (step.id === "area" && a.area !== "Onderrug") {
-        await botSay("In deze demo is alleen de vragenlijst voor <b>onderrug</b> uitgewerkt. We gaan daarmee verder.", "", run);
-        a.area = "Onderrug";
+    const c = await answer({ id: "consent", type: "single", options: ["Akkoord", "Liever niet"] }, run);
+    if (c !== "Akkoord") { await botSay(`Geen probleem. Je kunt de praktijk ook bellen op ${brand.phone}.`, "", run); return; }
+
+    for (let i = 0; ; i++) {
+      const list = questionFlow(a);
+      if (i >= list.length) break;
+      const q = list[i];
+      if (q.show && !safe(q.show, a)) continue;
+      const text = typeof q.q === "function" ? q.q(a) : q.q;
+      if (q.id === Q_GENERAL[0].id) await botSay("Nu een paar algemene vragen over je gezondheid. Die stellen we iedereen.", "", run);
+      await botSay(q.id === "geb" ? `Dank je, ${esc(first(a.naam))}. ${text}` : text, "", run);
+      a[q.id] = await answer(q, run);
+      if (q.id === "geb") {
+        a.age = ageFrom(a.geb);
+        if (a.age < 16) await botSay("Omdat je jonger bent dan 16, vragen we je dit samen met je ouder of verzorger in te vullen.", "", run);
       }
-      if (step.urgent && step.urgent(a[step.id])) break; // spoed: direct stoppen met vragen
+      if (q.id === "regio") {
+        a.regioKey = regionKey(a.regio);
+        if (a.regioKey !== "anders") await botSay(`Ik stel je nu een paar vragen die specifiek bij je <b>${a.regio.toLowerCase()}</b> horen.`, "", run);
+      }
+      if (q.stop && safe(q.stop, a)) { a._stopped = true; break; }
     }
-    const t = triage(a);
-    const out = patientOutcome(t.level, a);
+
+    const r = evaluate(a);
+    const out = patientOutcome(r, a);
     await botSay(out.text, out.cls, run);
     let slot = null;
-    if (t.level === "groen") {
+    if (r.level === "groen") {
       const slots = ["di 14 okt · 09:30", "di 14 okt · 16:15", "wo 15 okt · 11:00"];
-      slot = await answer({ id: "slot", options: slots, q: () => "" }, a, run);
+      slot = await answer({ id: "slot", type: "single", options: slots }, run);
       await botSay(`Top, je afspraak staat op <b>${slot}</b>. Je krijgt een bevestiging per mail. Tot dan! 💪`, "", run);
     }
-    addToInbox({ answers: a, t, time: today(), slot, fresh: true });
+    addToInbox({ answers: a, r, time: stamp(), slot, fresh: true });
   } catch (e) {
     if (e !== "cancel") console.error(e);
   } finally {
@@ -203,10 +204,12 @@ function addToInbox(item) {
 function renderInbox() {
   inboxEl.innerHTML = "";
   items.forEach((it, i) => {
+    const a = it.answers, r = it.r;
+    const top = r.hits.find(f => f.level === r.level);
     const li = document.createElement("li");
     if (it.fresh) { li.classList.add("new"); it.fresh = false; }
-    li.innerHTML = `<span class="status ${it.t.level}">${ROUTES[it.t.level].label}</span>
-      <span class="who"><b>${esc(it.answers.name)}, ${esc(it.answers.age)} jr</b><small>${esc(it.answers.area)} · ${esc(it.t.reason)}</small></span>
+    li.innerHTML = `<span class="status ${r.level}">${ROUTES[r.level].label}</span>
+      <span class="who"><b>${esc(a.naam)}, ${esc(a.age)} jr</b><small>${esc(a.regio)} · ${esc(top ? top.cluster : "Geen alarmsignalen")}</small></span>
       <time>${it.time}</time>`;
     li.onclick = () => select(i);
     inboxEl.appendChild(li);
@@ -223,31 +226,34 @@ function select(i) {
 }
 
 function renderDetail() {
-  const it = current, a = it.answers, t = it.t, r = ROUTES[t.level];
-  const needsLetter = t.level === "rood" || t.level === "spoed";
-  const flags = [
-    ...t.red.map(f => `<span class="flag">${esc(f)}</span>`),
-    ...t.yellow.map(f => `<span class="flag yellow">${esc(f)}</span>`),
-  ];
-  if (!flags.length) flags.push('<span class="flag none">Geen rode of gele vlaggen</span>');
+  const it = current, a = it.answers, r = it.r, route = ROUTES[r.level];
+  const alarms = r.hits.filter(f => f.level !== "info").sort((x, y) => LEVEL_RANK[y.level] - LEVEL_RANK[x.level]);
+  const notes = r.hits.filter(f => f.level === "info");
+  const showLetter = r.level === "rood" || r.level === "spoed" || a.toestemming === "Ja";
+  const flagHtml = alarms.length
+    ? alarms.map(f => `<li class="flag-row"><span class="status ${f.level}">${f.level === "rood" ? "Rood · " + f.termijn : ROUTES[f.level].label}</span><span>${esc(f.label)}<small>${esc(SRC[f.src])}</small></span></li>`).join("")
+    : `<li class="flag-row"><span class="status groen">Geen</span><span>Geen rode vlaggen gevonden</span></li>`;
   const fact = (k, v) => v ? `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>` : "";
   $("#detail").innerHTML = `
     <div class="detail-top">
       <div>
-        <span class="status ${t.level}">${r.label} · ${r.title}</span>
-        <h3>${esc(a.name)}, ${esc(a.age)} jaar</h3>
-        <span class="muted">Screening ingevuld ${it.time}${it.slot ? ` · afspraak ${esc(it.slot)}` : ""}</span>
+        <span class="status ${r.level}">${route.label} · ${route.title}</span>
+        <h3>${esc(a.naam)}, ${esc(a.age)} jaar</h3>
+        <span class="muted">Screening ingevuld ${it.time}${it.slot ? ` · afspraak ${esc(it.slot)}` : ""}${a._stopped ? " · vragenlijst gestopt na alarmsignaal" : ""}</span>
       </div>
     </div>
-    <div class="route-box ${t.level}"><strong>Doorverwijzing</strong>${esc(r.action)}</div>
+    <div class="route-box ${r.level}"><strong>Doorverwijzing</strong>${esc(routeAction(r))}</div>
     <dl class="facts">
-      ${fact("Hulpvraag", a.goal)}${fact("Klacht", a.area)}${fact("Duur", a.duration)}${fact("Ontstaan", a.onset)}
-      ${fact("Pijn (NPRS)", a.pain && a.pain + "/10")}${fact("Uitstraling", a.radiation)}${fact("Functioneren", a.work)}${fact("Bewegingsangst", a.fear)}
+      ${fact("Hulpvraag", a.doel)}${fact("Klacht", a.klacht)}${fact("Voorlopige indeling", r.classification)}${fact("Duur", a.duur)}
+      ${fact("Ontstaan", a.ontstaan)}${fact("Pijn (NPRS)", a.pijn && a.pijn + "/10")}${fact("Beloop", a.beloop)}
+      ${fact("Risico aanhoudende klachten", a._stopped ? "" : `${r.risk} (${r.prognostic.length} factoren)`)}
     </dl>
-    <div class="flags">${flags.join("")}</div>
+    <p class="mono label">Rode vlaggen</p>
+    <ul class="flag-list">${flagHtml}</ul>
+    ${notes.length ? `<p class="mono label">Aandachtspunten voor de intake</p><ul class="note-list">${notes.map(f => `<li>${esc(f.label)}</li>`).join("")}</ul>` : ""}
     <div class="tabs" role="tablist">
       <button class="tab ${currentTab === "report" ? "active" : ""}" data-tab="report">Conceptverslag</button>
-      ${needsLetter ? `<button class="tab ${currentTab === "letter" ? "active" : ""}" data-tab="letter">Brief aan huisarts</button>` : ""}
+      ${showLetter ? `<button class="tab ${currentTab === "letter" ? "active" : ""}" data-tab="letter">Bericht aan huisarts</button>` : ""}
       <button class="tab ${currentTab === "raw" ? "active" : ""}" data-tab="raw">Alle antwoorden</button>
     </div>
     <pre class="report" id="reportText">${esc(tabText(currentTab, it))}</pre>
@@ -263,53 +269,93 @@ function renderDetail() {
   };
 }
 
+const BELOOP_CODE = {
+  "Het wordt erger": "Klachten zijn in de loop van de tijd toegenomen",
+  "Het wordt minder": "Klachten zijn in de loop van de tijd afgenomen",
+  "Het blijft gelijk": "Klachten zijn in de loop van de tijd niet gewijzigd",
+  "Het wisselt": "Klachten zijn wisselend van karakter",
+};
+
+function asked(a) {
+  const all = questionFlow(a);
+  return all.filter(q => a[q.id] !== undefined);
+}
+
 function tabText(tab, it) {
-  const a = it.answers, t = it.t, r = ROUTES[t.level];
+  const a = it.answers, r = it.r, route = ROUTES[r.level];
   if (tab === "raw") {
-    return Object.keys(QUESTION_LABELS).filter(k => a[k] !== undefined)
-      .map(k => `${QUESTION_LABELS[k]}: ${a[k]}`).join("\n")
-      + (a.cauda === "Ja" || a.weakness === "Ja" ? "\n\n(Vragenlijst afgebroken na alarmsignaal.)" : "");
+    return asked(a).map(q => `${typeof q.q === "function" ? q.q(a) : q.q}\n→ ${show(a[q.id], q)}`).join("\n\n")
+      + (a._stopped ? "\n\n(Vragenlijst gestopt na spoedsignaal.)" : "");
   }
-  const neg = Object.entries({ cauda: "zadelanesthesie/mictiestoornis", weakness: "progressief krachtverlies", cancer: "maligniteit", weight: "gewichtsverlies", night: "nachtpijn", fever: "koorts" })
-    .filter(([k]) => a[k] === "Nee").map(([, v]) => v);
+  const alarms = r.hits.filter(f => f.level !== "info");
+  const notes = r.hits.filter(f => f.level === "info");
   if (tab === "letter") {
-    return `Aan: huisarts van ${a.name}
+    const noConsent = a.toestemming === "Nee";
+    return `${noConsent ? "LET OP: patiënt gaf GEEN toestemming om de huisarts te informeren.\nDit bericht alleen aan de patiënt zelf meegeven.\n\n" : ""}DTF-BERICHT AAN DE HUISARTS
+Aan: ${a.huisarts && a.huisarts !== "—" ? a.huisarts : "huisarts van patiënt"}
 Van: ${brand.name}
-Betreft: ${a.name}, ${a.age} jaar — screening directe toegankelijkheid
+Betreft: ${a.naam}, geb. ${fmtDate(a.geb)}
 
 Geachte collega,
 
-Uw patiënt(e) meldde zich op ${it.time} bij onze praktijk met ${a.area.toLowerCase()}pijn${a.duration ? ` (${a.duration.toLowerCase()})` : ""}. Tijdens de digitale screening kwamen de volgende alarmsignalen naar voren:
+Uw patiënt(e) meldde zich op ${it.time} zonder verwijzing bij onze praktijk met ${(a.regio || "").toLowerCase()}klachten (${(a.duur || "").toLowerCase()}). Bij de screening in het kader van de directe toegankelijkheid kwam het volgende naar voren:
 
-${t.red.map(f => "  • " + f).join("\n")}
+${alarms.length ? alarms.map(f => "  • " + f.label).join("\n") : "  • Geen rode vlaggen; patroon herkenbaar voor fysiotherapie."}
 
-Wij hebben patiënt(e) geadviseerd ${t.level === "spoed" ? "u vandaag nog te bellen, of buiten kantoortijden de huisartsenpost" : "binnen 2 werkdagen een afspraak bij u te maken"}. Wij starten geen behandeling voordat deze signalen medisch zijn beoordeeld.
+Conclusie screening: ${route.conclusie}.
+${r.level === "rood" || r.level === "spoed"
+  ? `Wij hebben patiënt(e) geadviseerd ${r.level === "spoed" ? (r.call112 ? "direct 112 te bellen" : "u direct te bellen, of buiten kantoortijden de huisartsenpost") : "u " + TERMIJN_TEXT[r.termijn] + " te raadplegen"}. Wij starten geen behandeling voordat deze signalen medisch zijn beoordeeld.`
+  : `Wij starten met fysiotherapeutisch onderzoek en houden u op de hoogte.`}
 
-Een volledig overzicht van de antwoorden is bijgevoegd. Voor vragen kunt u ons bereiken via ${brand.phone}.
+Voor vragen zijn wij bereikbaar via ${brand.phone}.
 
 Met collegiale groet,
 
 [naam fysiotherapeut], fysiotherapeut
 ${brand.name}`;
   }
+  const regionQs = (Q_REGION[a.regioKey] || []).filter(q => a[q.id] !== undefined);
   return `SCREENING DIRECTE TOEGANKELIJKHEID — CONCEPT
 ${brand.name} · ${it.time}
+(Opbouw volgens KNGF-richtlijn Fysiotherapeutische dossiervoering 2019)
 
-Patiënt: ${a.name}, ${a.age} jaar
-Hulpvraag: ${a.goal || "—"}
+PATIËNT
+Naam: ${a.naam}
+Geboortedatum: ${fmtDate(a.geb)} (${a.age} jaar)
+BSN: aanvullen via praktijkadministratie
+Huisarts: ${a.huisarts || "niet gevraagd"}
 
-ANAMNESE (patiëntgerapporteerd)
-Klacht: ${a.area}, ${a.duration ? a.duration.toLowerCase() : "duur onbekend"}, ontstaan ${a.onset ? a.onset.toLowerCase() : "onbekend"}.
-Pijn (NPRS): ${a.pain ?? "—"}/10. Uitstraling: ${a.radiation ? a.radiation.toLowerCase() : "—"}.
-Functioneren: ${a.work ? a.work.toLowerCase() : "—"}.
+CONTACTREDEN EN HULPVRAAG
+Contactreden: ${a.klacht || "—"}
+Hulpvraag: ${a.doel || "niet gevraagd (vragenlijst gestopt)"}
+
+FUNCTIONERINGSPROBLEMEN, DUUR EN BELOOP
+Klachtgebied: ${a.regio}${a.x_waar ? " — " + a.x_waar : ""}
+Duur: ${a.duur || "—"}. Ontstaan: ${a.ontstaan || "—"}${a.trauma ? " (" + a.trauma.split(" (")[0].toLowerCase() + " trauma)" : ""}.
+Beloop: ${BELOOP_CODE[a.beloop] || "—"}.
+Pijn (NPRS): ${a.pijn ?? "—"}/10.
+Beperkingen dagelijks leven: ${a.adl || "—"}. Werk: ${a.werk || "—"}.
+${regionQs.length ? "\nRegiospecifiek (" + a.regio.toLowerCase() + "):\n" + regionQs.map(q => "  - " + q.q + " " + show(a[q.id], q)).join("\n") + "\n" : ""}
+MEDISCHE GEZONDHEIDSDETERMINANTEN
+Algemene klachten: ${show(a.alg)}. Nachtpijn: ${a.nacht || "—"}.
+Voorgeschiedenis: ${show(a.vg)}.
+Medicatie: ${show(a.med)}.
+Operatie < 3 maanden: ${a.operatie || (a.ontstaan === "Na een operatie" ? "Ja" : "—")}.
+
+PERSOONLIJKE DETERMINANTEN EN PROGNOSE
+Bewegingsangst: ${a.angst || "—"}. Somberheid/piekeren: ${a.stemming || "—"}. Verwachting herstel: ${a.verwacht || "—"}.
+Prognostische factoren aanhoudende klachten: ${r.prognostic.length ? r.prognostic.join("; ") : "geen"}.
+Indicatief risico: ${a._stopped ? "n.v.t." : r.risk}.
 
 SCREENING
-Rode vlaggen positief: ${t.red.length ? t.red.join("; ") : "geen"}.
-Rode vlaggen negatief: ${neg.length ? neg.join(", ") : "—"}.
-Gele vlaggen: ${t.yellow.length ? t.yellow.join("; ") : "geen"}.
+Rode vlaggen: ${alarms.length ? "\n" + alarms.map(f => `  - ${f.label} [${f.level}${f.termijn ? ", " + f.termijn : ""}] — ${SRC[f.src]}`).join("\n") : "geen"}
+Aandachtspunten: ${notes.length ? "\n" + notes.map(f => "  - " + f.label).join("\n") : "geen"}
+Voorlopige indeling: ${r.classification}
 
-CONCLUSIE SCREENING: ${r.label.toUpperCase()} — ${r.title}
-Beleid: ${r.action}
+CONCLUSIE SCREENING: ${route.conclusie}
+Indicatie verder fysiotherapeutisch onderzoek: ${route.indicatie}
+Toestemming overleg/DTF-bericht huisarts: ${a.toestemming || "niet gevraagd (spoed)"}
+Advies/vervolg: ${routeAction(r)}
 
 — Opgesteld door Vooraf op basis van de antwoorden van patiënt.
   Te controleren en aan te vullen door de behandelend fysiotherapeut.`;
@@ -317,18 +363,31 @@ Beleid: ${r.action}
 
 // ---------- Presets ----------
 const PRESETS = {
-  groen: { consent: "Akkoord", name: "Sanne de Vries", age: "34", area: "Onderrug", duration: "1 tot 6 weken", onset: "Na tillen of een verkeerde beweging", pain: "6", radiation: "Nee, alleen in mijn rug", cauda: "Nee", weakness: "Nee", cancer: "Nee", weight: "Nee", night: "Nee", fever: "Nee", fear: "Een beetje", work: "Met moeite", goal: "Weer met de kinderen kunnen spelen en hardlopen" },
-  rood: { consent: "Akkoord", name: "Henk Jansen", age: "63", area: "Onderrug", duration: "6 tot 12 weken", onset: "Vanzelf, geleidelijk", pain: "7", radiation: "Nee, alleen in mijn rug", cauda: "Nee", weakness: "Nee", cancer: "Ja", weight: "Ja", night: "Ja", fever: "Nee", fear: "Nee", work: "Met moeite", goal: "Weer de tuin kunnen doen" },
-  spoed: { consent: "Akkoord", name: "Lotte Bakker", age: "41", area: "Onderrug", duration: "Korter dan 1 week", onset: "Na tillen of een verkeerde beweging", pain: "8", radiation: "Tot onder de knie", cauda: "Ja" },
+  groen: { naam: "Sanne de Vries", geb: "1992-03-14", regio: "Onderrug", klacht: "Pijn onderin mijn rug sinds het verhuizen", duur: "1 tot 6 weken", ontstaan: "Na tillen, een verkeerde beweging of overbelasting", beloop: "Het wordt minder", pijn: "6", angst: "Een beetje", adl: "Behoorlijk", werk: "Ja, vooral zittend of licht werk", doel: "Weer met de kinderen spelen en hardlopen", huisarts: "dr. Bakker, Noordwijk" },
+  rood: { naam: "Henk Jansen", geb: "1962-06-02", regio: "Onderrug", klacht: "Zeurende rugpijn die maar niet overgaat", duur: "6 tot 12 weken", ontstaan: "Vanzelf, zonder duidelijke reden", beloop: "Het wordt erger", pijn: "7", alg: ["Afgevallen zonder reden (meer dan 5 kg)", "Erg moe of algemeen ziek"], nacht: "Ja", vg: ["Kanker (nu of vroeger)"], adl: "Behoorlijk", werk: "Nee / niet van toepassing", doel: "Weer de tuin kunnen doen", huisarts: "dr. Visser, Katwijk" },
+  spoed: { naam: "Lotte Bakker", geb: "1985-11-23", regio: "Onderrug", klacht: "Rugpijn met uitstraling naar mijn been", duur: "Korter dan 1 week", ontstaan: "Na tillen, een verkeerde beweging of overbelasting", beloop: "Het wordt erger", pijn: "8", r_uitstr: "Tot onder de knie", r_tint: "Ja", r_cauda: "Ja" },
+  nek: { naam: "Peter de Wit", geb: "1979-01-30", regio: "Nek", klacht: "Nekpijn na een duik in het zwembad", duur: "Korter dan 1 week", ontstaan: "Na een ongeluk, val of sportblessure", trauma: "Licht (bijv. struikelen, verzwikken)", beloop: "Het blijft gelijk", pijn: "6", n_cad: ["Duizeligheid", "Dubbelzien of wazig zien"] },
+  enkel: { naam: "Emma Hendriks", geb: "2003-08-09", regio: "Enkel of voet", klacht: "Enkel verzwikt bij hockey", duur: "Korter dan 1 week", ontstaan: "Na een ongeluk, val of sportblessure", trauma: "Licht (bijv. struikelen, verzwikken)", beloop: "Het blijft gelijk", pijn: "7", e_lopen: "Nee", e_druk: "Ja", adl: "Heel veel", werk: "Ja, vooral zittend of licht werk", doel: "Weer hockeyen", huisarts: "dr. Smit, Leiden" },
 };
 const BACKLOG = [
-  { name: "Mark Visser", age: "28", area: "Onderrug", duration: "Korter dan 1 week", onset: "Na tillen of een verkeerde beweging", pain: "5", radiation: "Nee, alleen in mijn rug", cauda: "Nee", weakness: "Nee", cancer: "Nee", weight: "Nee", night: "Nee", fever: "Nee", fear: "Nee", work: "Met moeite", goal: "Weer zonder pijn kunnen werken (stratenmaker)", slot: "ma 13 okt · 14:00", mins: 95 },
-  { name: "Ingrid Smit", age: "57", area: "Onderrug", duration: "Langer dan 3 maanden", onset: "Vanzelf, geleidelijk", pain: "5", radiation: "Tot onder de knie", cauda: "Nee", weakness: "Nee", cancer: "Nee", weight: "Nee", night: "Nee", fever: "Nee", fear: "Ja, erg", work: "Nee, ik zit thuis", goal: "Weer aan het werk kunnen", mins: 210 },
-  { name: "Youssef El Amrani", age: "45", area: "Onderrug", duration: "1 tot 6 weken", onset: "Vanzelf, geleidelijk", pain: "4", radiation: "Tot in bil of bovenbeen", cauda: "Nee", weakness: "Nee", cancer: "Nee", weight: "Nee", night: "Nee", fever: "Nee", fear: "Een beetje", work: "Ja, gewoon", goal: "Weer voetballen op zondag", slot: "di 14 okt · 08:45", mins: 1440 },
+  { naam: "Ingrid Smit", geb: "1958-04-11", regio: "Knie", klacht: "Stijve, pijnlijke knie bij traplopen", duur: "Langer dan 3 maanden", ontstaan: "Vanzelf, zonder duidelijke reden", beloop: "Het wisselt", pijn: "5", k_stijf: "Ja, korter dan 30 minuten", eerder: "Ja, eerder", adl: "Behoorlijk", werk: "Nee / niet van toepassing", doel: "Weer fietsen met mijn kleinkinderen", huisarts: "dr. Bakker, Noordwijk", toestemming: "Ja", slot: "ma 13 okt · 14:00", mins: 95 },
+  { naam: "Willem Kok", geb: "1953-09-18", regio: "Schouder", klacht: "Pijn en stijfheid in beide schouders", duur: "1 tot 6 weken", ontstaan: "Vanzelf, zonder duidelijke reden", beloop: "Het wordt erger", pijn: "6", s_pmr: "Ja", alg: ["Erg moe of algemeen ziek"], adl: "Heel veel", werk: "Nee / niet van toepassing", doel: "'s Ochtends weer zelf mijn jas aantrekken", huisarts: "dr. Visser, Katwijk", mins: 210 },
+  { naam: "Youssef El Amrani", geb: "1981-02-05", regio: "Nek", klacht: "Stijve nek na lange dagen achter de laptop", duur: "1 tot 6 weken", ontstaan: "Na tillen, een verkeerde beweging of overbelasting", beloop: "Het blijft gelijk", pijn: "4", adl: "Behoorlijk", werk: "Ja, vooral zittend of licht werk", angst: "Een beetje", doel: "Weer zonder hoofdpijn werken", huisarts: "dr. Smit, Leiden", toestemming: "Ja", slot: "di 14 okt · 08:45", mins: 1440 },
 ];
 
+function fill(p) {
+  // vul niet-opgegeven antwoorden aan met het eerste (onschuldige) antwoord, zoals autoplay doet
+  const a = { ...p };
+  a.age = ageFrom(a.geb); a.regioKey = regionKey(a.regio);
+  for (const q of questionFlow(a)) {
+    if (q.show && !safe(q.show, a)) continue;
+    if (a[q.id] === undefined) a[q.id] = q.type === "multi" ? (q.options.includes(NONE) ? [NONE] : []) : q.type === "single" ? q.options[0] : "—";
+  }
+  return a;
+}
+
 function seedInbox() {
-  items = BACKLOG.map(b => ({ answers: b, t: triage(b), time: today(b.mins), slot: b.slot || null }));
+  items = BACKLOG.map(b => { const a = fill(b); return { answers: a, r: evaluate(a), time: stamp(b.mins), slot: b.slot || null }; });
   renderInbox();
   select(0);
 }
@@ -350,7 +409,7 @@ function setBrand(key) {
 document.querySelectorAll(".brand-btn").forEach(b => b.onclick = () => setBrand(b.dataset.brand));
 document.querySelectorAll("[data-scenario]").forEach(b => b.onclick = () => {
   document.getElementById("phone").scrollIntoView({ behavior: "smooth", block: "center" });
-  runChat(PRESETS[b.dataset.scenario]);
+  runChat({ consent: "Akkoord", ...PRESETS[b.dataset.scenario] });
 });
 
 seedInbox();
