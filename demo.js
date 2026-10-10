@@ -71,8 +71,10 @@ function addMsg(html, who = "bot", cls = "") {
   chat.scrollTop = chat.scrollHeight;
   return el;
 }
-const SPEEDS = { rustig: 1, normaal: 0.5, snel: 0.15 };
-let speed = "rustig", intake = "link";
+// Voorbeelden lopen altijd in een rustig, goed te volgen tempo.
+const SPEEDS = { rustig: 1 };
+const speed = "rustig";
+let intake = "link";
 
 async function botSay(html, cls, run) {
   const t = addMsg("typt…", "bot", "typing");
@@ -583,7 +585,6 @@ function segment(id, attr, set) {
   });
 }
 segment("intakeSeg", "intake", v => { intake = v; runChat(); });
-segment("speedSeg", "speed", v => { speed = v; });
 document.querySelectorAll("[data-scenario]").forEach(b => b.onclick = () => {
   document.getElementById("phone").scrollIntoView({ behavior: "smooth", block: "center" });
   runChat({ consent: "Akkoord", ...PRESETS[b.dataset.scenario] });
