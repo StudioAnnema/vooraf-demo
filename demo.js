@@ -453,9 +453,18 @@ function seedInbox() {
 function setBrand(key) {
   brand = BRANDS[key];
   document.body.dataset.brand = key;
+  if (key === "eigen") {
+    document.body.style.setProperty("--brand", brand.color);
+    document.body.style.setProperty("--brand-soft", Huisstijl.soft(brand.color));
+  } else {
+    document.body.style.removeProperty("--brand");
+    document.body.style.removeProperty("--brand-soft");
+  }
   $("#practiceName").textContent = brand.name;
   $("#practiceName2").textContent = brand.name;
-  $("#practiceLogo").textContent = brand.short;
+  const logoEl = $("#practiceLogo");
+  if (brand.logo) { logoEl.innerHTML = ""; const img = new Image(); img.src = brand.logo; img.alt = ""; logoEl.appendChild(img); }
+  else logoEl.textContent = brand.short;
   document.querySelectorAll(".brand-btn").forEach(b => {
     const on = b.dataset.brand === key;
     b.classList.toggle("active", on); b.setAttribute("aria-checked", on);
@@ -463,7 +472,110 @@ function setBrand(key) {
   if (current) renderDetail();
   runChat();
 }
-document.querySelectorAll(".brand-btn").forEach(b => b.onclick = () => setBrand(b.dataset.brand));
+document.querySelectorAll(".brand-btn:not(.brand-own)").forEach(b => b.onclick = () => setBrand(b.dataset.brand));
+
+// ---------- Eigen praktijk ----------
+const OWN_KEY = "vooraf-eigen-praktijk";
+const own = { name: "", site: "", color: "#1F5F5B", logo: null, colorTouched: false };
+const ownPanel = $("#ownPanel"), ownBtn = document.querySelector(".brand-own");
+
+function ownStatus(t) { $("#ownStatus").textContent = t; }
+function ownPreview() {
+  const el = $("#ownLogo");
+  el.style.setProperty("--own", own.color);
+  if (own.logo) { el.innerHTML = ""; const img = new Image(); img.src = own.logo; img.alt = ""; el.appendChild(img); }
+  else el.textContent = own.name ? Huisstijl.initials(own.name) : "?";
+  $("#ownColor").value = own.color;
+}
+function useLogo(img, how) {
+  own.logo = Huisstijl.toDataUrl(img);
+  let note = "";
+  if (!own.colorTouched) {
+    const c = Huisstijl.extractColor(img);
+    if (c) { own.color = Huisstijl.readable(c); note = " Huisstijlkleur automatisch gekozen."; }
+    else note = " Geen duidelijke kleur gevonden; kies er zelf een.";
+  }
+  ownStatus(how + note);
+  ownPreview();
+}
+let siteTimer = null, siteReq = 0;
+async function fetchSiteLogo() {
+  const h = Huisstijl.host($("#ownSite").value);
+  own.site = h;
+  if (!h) { if ($("#ownSite").value.trim()) ownStatus("Dat lijkt geen websiteadres. Bijv. jouwpraktijk.nl"); return; }
+  const req = ++siteReq;
+  ownStatus(`Logo ophalen van ${h}…`);
+  try {
+    const img = await Huisstijl.logoFromSite(h);
+    if (req !== siteReq) return;
+    useLogo(img, `Logo gevonden op ${h}.`);
+  } catch {
+    if (req !== siteReq) return;
+    ownStatus(`Geen logo gevonden voor ${h}. Upload je logo of kies een kleur.`);
+  }
+}
+$("#ownSite").addEventListener("input", () => { clearTimeout(siteTimer); siteTimer = setTimeout(fetchSiteLogo, 700); });
+$("#ownSite").addEventListener("change", () => { clearTimeout(siteTimer); fetchSiteLogo(); });
+$("#ownName").addEventListener("input", e => { own.name = e.target.value.trim(); ownPreview(); });
+$("#ownColor").addEventListener("input", e => { own.color = Huisstijl.readable(e.target.value); own.colorTouched = true; ownPreview(); });
+$("#ownFile").addEventListener("change", async e => {
+  try { siteReq++; useLogo(await Huisstijl.logoFromFile(e.target.files[0]), "Logo geladen."); }
+  catch (err) { ownStatus(err.message); }
+});
+
+function applyOwn() {
+  own.name = $("#ownName").value.trim();
+  if (!own.name) { ownStatus("Vul eerst de naam van je praktijk in."); $("#ownName").focus(); return false; }
+  BRANDS.eigen = { name: own.name, short: Huisstijl.initials(own.name), phone: "het nummer van de praktijk", color: own.color, logo: own.logo };
+  $("#ownSwatch").style.background = own.color; $("#ownSwatch").textContent = "";
+  $("#ownBtnLabel").textContent = own.name;
+  try { localStorage.setItem(OWN_KEY, JSON.stringify({ name: own.name, site: own.site, color: own.color, logo: own.logo })); } catch {}
+  setBrand("eigen");
+  return true;
+}
+ownPanel.addEventListener("submit", e => {
+  e.preventDefault();
+  if (applyOwn()) { ownPanel.hidden = true; ownBtn.setAttribute("aria-expanded", "false"); document.getElementById("phone").scrollIntoView({ behavior: "smooth", block: "center" }); }
+});
+ownBtn.onclick = () => {
+  const open = ownPanel.hidden;
+  ownPanel.hidden = !open; ownBtn.setAttribute("aria-expanded", String(open));
+  if (open) $("#ownName").focus();
+  if (BRANDS.eigen && document.body.dataset.brand !== "eigen") setBrand("eigen");
+};
+$("#ownShare").onclick = async () => {
+  own.name = $("#ownName").value.trim();
+  if (!own.name) { ownStatus("Vul eerst de naam van je praktijk in."); return; }
+  const u = new URL(location.href.split("?")[0]);
+  u.searchParams.set("praktijk", own.name);
+  if (own.site) u.searchParams.set("site", own.site);
+  u.searchParams.set("kleur", own.color.slice(1));
+  try { await navigator.clipboard.writeText(u.toString()); ownStatus("Deellink gekopieerd. Wie hem opent, ziet de demo in deze huisstijl."); }
+  catch { ownStatus("Kopiëren lukte niet. Deellink: " + u.toString()); }
+};
+
+// Bij laden: eerst een deellink, anders wat eerder in deze browser is ingesteld.
+async function restoreOwn() {
+  const q = new URLSearchParams(location.search);
+  let saved = null;
+  if (q.get("praktijk")) {
+    saved = { name: q.get("praktijk").slice(0, 40), site: Huisstijl.host(q.get("site") || ""), color: /^[0-9a-f]{6}$/i.test(q.get("kleur") || "") ? "#" + q.get("kleur") : null, logo: null };
+  } else {
+    try { saved = JSON.parse(localStorage.getItem(OWN_KEY) || "null"); } catch {}
+  }
+  if (!saved || !saved.name) return false;
+  $("#ownName").value = own.name = saved.name;
+  $("#ownSite").value = own.site = saved.site || "";
+  own.logo = saved.logo || null;
+  if (saved.color) { own.color = Huisstijl.readable(saved.color); own.colorTouched = true; }
+  ownPreview();
+  if (!own.logo && own.site) {
+    try { const img = await Huisstijl.logoFromSite(own.site); useLogo(img, `Logo gevonden op ${own.site}.`); } catch {}
+  }
+  applyOwn();
+  return true;
+}
+
 function segment(id, attr, set) {
   document.querySelectorAll(`#${id} button`).forEach(b => b.onclick = () => {
     document.querySelectorAll(`#${id} button`).forEach(x => x.classList.toggle("active", x === b));
@@ -478,4 +590,4 @@ document.querySelectorAll("[data-scenario]").forEach(b => b.onclick = () => {
 });
 
 seedInbox();
-runChat();
+restoreOwn().then(applied => { if (!applied) runChat(); });

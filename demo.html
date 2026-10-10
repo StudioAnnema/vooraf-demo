@@ -31,7 +31,26 @@
       <button class="brand-btn active" data-brand="duinen" role="radio" aria-checked="true"><span style="background:#1F5F5B"></span>Fysio De Duinen</button>
       <button class="brand-btn" data-brand="oost" role="radio" aria-checked="false"><span style="background:#8C3B2A"></span>FysioCentrum Oost</button>
       <button class="brand-btn" data-brand="beweeg" role="radio" aria-checked="false"><span style="background:#33407A"></span>Beweegpraktijk Lisse</button>
+      <button class="brand-btn brand-own" data-brand="eigen" role="radio" aria-checked="false" aria-expanded="false" aria-controls="ownPanel"><span id="ownSwatch" class="own-swatch">+</span><b id="ownBtnLabel">Jouw praktijk</b></button>
     </div>
+    <form class="own-panel" id="ownPanel" hidden novalidate>
+      <p class="own-intro"><b>Probeer het met je eigen praktijk.</b> Vul je naam en website in. We halen je logo op en kiezen automatisch je huisstijlkleur.</p>
+      <label>Naam van je praktijk<input id="ownName" required maxlength="40" autocomplete="organization" placeholder="Bijv. Fysiotherapie Centrum Leiden"></label>
+      <label>Website <small>(voor het logo)</small><input id="ownSite" inputmode="url" autocomplete="url" placeholder="bijv. jouwpraktijk.nl"></label>
+      <div class="own-row">
+        <label class="own-upload">Of upload je logo<input id="ownFile" type="file" accept="image/*"></label>
+        <label class="own-color">Kleur<input id="ownColor" type="color" value="#1F5F5B"></label>
+      </div>
+      <div class="own-preview" aria-live="polite">
+        <div class="own-logo" id="ownLogo">?</div>
+        <span id="ownStatus" class="muted">Nog geen logo.</span>
+      </div>
+      <div class="own-actions">
+        <button class="btn btn-small" type="submit">Toon in de demo</button>
+        <button class="btn btn-small btn-ghost" type="button" id="ownShare">Kopieer deellink</button>
+      </div>
+      <p class="own-note">Je logo en gegevens blijven in je eigen browser. Alleen het websiteadres gaat naar een logodienst (icon.horse). Een geüpload logo zit niet in de deellink.</p>
+    </form>
     <div class="ctrl-row">
       <div>
         <p class="mono label">Patiënt komt binnen via</p>
@@ -102,6 +121,7 @@
 <p class="disclaimer">De vragen en rode vlaggen zijn gebaseerd op KNGF-richtlijnen, aangevuld waar geen KNGF-richtlijn beschikbaar was. Ze zijn nog niet gevalideerd door een fysiotherapeut. Vooraf ondersteunt de screening; de fysiotherapeut beslist.</p>
 
 <script src="screening-data.js"></script>
+<script src="huisstijl.js"></script>
 <script src="demo.js"></script>
 </body>
 </html>

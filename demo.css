@@ -125,3 +125,23 @@
 .seg button.active { background: var(--ink); color: #fff; }
 .ctrl-row { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 18px; }
 .ctrl-row .label { margin-bottom: 6px; }
+
+/* Eigen praktijk (white label proberen) */
+.brand-own { border-style: dashed; }
+.own-swatch { width: 14px !important; height: 14px !important; border-radius: 3px; display: inline-grid !important; place-items: center; font-size: .8rem; line-height: 1; background: var(--line); color: var(--ink); }
+.own-panel { margin-top: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; }
+.own-panel[hidden] { display: none; }
+.own-intro { margin: 0; font-size: .97rem; }
+.own-panel label { display: grid; gap: 5px; font-weight: 600; font-size: .92rem; }
+.own-panel label small { font-weight: 400; color: var(--ink-soft); }
+.own-panel input:not([type=color]):not([type=file]) { font: 400 1rem var(--body); padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--ink); }
+.own-panel input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.own-row { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: end; }
+.own-upload input { font: 400 .88rem var(--body); max-width: 100%; }
+.own-color input { width: 52px; height: 40px; padding: 2px; border: 1px solid var(--line); border-radius: 6px; background: #fff; cursor: pointer; }
+.own-preview { display: flex; align-items: center; gap: 12px; font-size: .92rem; }
+.own-logo { width: 44px; height: 44px; border-radius: 10px; background: var(--own, #1F5F5B); color: #fff; display: grid; place-items: center; font-family: var(--display); font-weight: 800; flex: none; overflow: hidden; }
+.own-logo img, .practice-logo img { width: 100%; height: 100%; object-fit: contain; background: #fff; padding: 4px; }
+.own-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.own-note { margin: 0; font-size: .82rem; color: var(--ink-soft); }
+.practice-logo { overflow: hidden; }
