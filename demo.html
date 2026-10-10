@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vooraf — demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@500&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="demo.css">
+</head>
+<body class="demo-page">
+
+<header class="topbar">
+  <a href="index.html" class="logo">Vooraf<span class="logo-dot"></span></a>
+  <span class="mono muted">Demo · fictieve praktijk · niet voor echt gebruik</span>
+  <a href="index.html#pilot" class="btn btn-small">Pilot aanvragen</a>
+</header>
+
+<section class="demo-intro">
+  <div>
+    <p class="mono label">Klikbare demo</p>
+    <h1>Links de patiënt, rechts de praktijk.</h1>
+    <p class="lead">Vul de screening in als patiënt met lage rugpijn. Zodra je klaar bent, verschijnt rechts wat de fysiotherapeut ziet: triage, samenvatting en een conceptverslag.</p>
+  </div>
+  <div class="demo-controls">
+    <p class="mono label">Huisstijl van de praktijk (white label)</p>
+    <div class="brand-switch" role="radiogroup" aria-label="Kies praktijk">
+      <button class="brand-btn active" data-brand="duinen" role="radio" aria-checked="true"><span style="background:#1F5F5B"></span>Fysio De Duinen</button>
+      <button class="brand-btn" data-brand="oost" role="radio" aria-checked="false"><span style="background:#8C3B2A"></span>FysioCentrum Oost</button>
+      <button class="brand-btn" data-brand="beweeg" role="radio" aria-checked="false"><span style="background:#33407A"></span>Beweegpraktijk Lisse</button>
+    </div>
+    <p class="mono label" style="margin-top:18px">Snel een scenario afspelen</p>
+    <div class="scenario-row">
+      <button class="chip" data-scenario="groen">Groen · rugpijn na tillen</button>
+      <button class="chip" data-scenario="rood">Rood · kanker in voorgeschiedenis</button>
+      <button class="chip" data-scenario="spoed">Spoed · plasproblemen</button>
+    </div>
+  </div>
+</section>
+
+<main class="demo-grid">
+  <!-- PATIËNT -->
+  <section class="phone-wrap" aria-label="Patiëntkant">
+    <p class="mono label">Wat de patiënt ziet</p>
+    <div class="phone" id="phone">
+      <div class="phone-head">
+        <div class="practice-logo" id="practiceLogo">DD</div>
+        <div>
+          <strong id="practiceName">Fysio De Duinen</strong>
+          <small>Online screening · reactie binnen 1 werkdag</small>
+        </div>
+      </div>
+      <div class="chat" id="chat" aria-live="polite"></div>
+      <div class="chat-input" id="chatInput"></div>
+      <div class="phone-foot">Beveiligd · gegevens alleen voor <span id="practiceName2">Fysio De Duinen</span></div>
+    </div>
+  </section>
+
+  <!-- PRAKTIJK -->
+  <section class="dash" aria-label="Praktijkkant">
+    <p class="mono label">Wat de praktijk ziet</p>
+    <div class="dash-card">
+      <div class="dash-head">
+        <strong>Binnengekomen screenings</strong>
+        <span class="mono muted" id="dashCount">3 open</span>
+      </div>
+      <ul class="inbox" id="inbox"></ul>
+    </div>
+    <div class="dash-card detail" id="detail">
+      <p class="muted empty">Kies een screening of rond de chat links af.</p>
+    </div>
+  </section>
+</main>
+
+<p class="disclaimer">De vragen en rode vlaggen in deze demo zijn een voorbeeld en zijn nog niet klinisch gevalideerd. Vooraf ondersteunt de screening; de fysiotherapeut beslist.</p>
+
+<script src="demo.js"></script>
+</body>
+</html>
