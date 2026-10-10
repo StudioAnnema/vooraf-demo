@@ -45,8 +45,12 @@ a { color: inherit; }
 .topbar nav { display: flex; gap: 26px; }
 .topbar nav a { text-decoration: none; color: var(--ink-soft); font-weight: 600; font-size: .95rem; }
 .topbar nav a:hover { color: var(--ink); }
-.logo { font-family: var(--display); font-weight: 800; font-size: 1.6rem; text-decoration: none; letter-spacing: -0.03em; display: inline-flex; align-items: baseline; }
-.logo-dot { display: inline-block; width: 9px; height: 9px; background: var(--accent); border-radius: 2px; margin-left: 3px; }
+/* Logo: vinkvakje (= de V) vóór het woordmerk. Vakje = hoogte hoofdletter V (0,66em), op de basislijn. */
+.logo { font-family: var(--display); font-weight: 800; font-size: 1.6rem; line-height: 1; text-decoration: none; letter-spacing: -0.03em; color: inherit; white-space: nowrap; }
+.logo-mark { display: inline-block; width: .66em; height: .66em; margin-right: .22em; vertical-align: baseline; overflow: visible; }
+.logo-word { color: currentColor; }
+.logo-mark rect { fill: var(--accent); }
+.logo-mark path { fill: none; stroke: var(--paper); }
 
 /* Buttons */
 .btn {

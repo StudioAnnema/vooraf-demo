@@ -10,6 +10,20 @@ vlakken, monospace-labels zoals op een formulier. Geen SaaS-gradients of zwevend
 **Signatuur-element:** de triage-schaal (Groen · Oranje · Rood · Spoed) — een smalle balk met
 vier vakken die op meerdere plekken terugkomt en laat zien waar een patiënt terechtkomt.
 
+## Logo
+- **Opbouw:** beeldmerk vóór het woordmerk. Het beeldmerk is een formuliervakje (radius 20% van
+  de breedte) met een vinkje dat tegelijk de V van Vooraf is: twee rechte poten, links korter dan
+  rechts, ronde lijnuiteinden. Het logo doet wat de naam zegt: vooraf afgevinkt.
+- **Woordmerk:** "Vooraf" in Bricolage Grotesque 800, letter-spacing -0.03em, `currentColor`
+  (inkt op licht, papier op donker).
+- **Verhouding:** vakje = hoogte van de hoofdletter V (0,66em), op de basislijn; ruimte tot het
+  woord = een derde van het vakje (0,22em).
+- **Kleuren:** vakje altijd oker `--accent` (#B8612A), vinkje papier `--paper` (#F3EFE6), ook op
+  donkere vlakken.
+- **Minimale grootte:** vakje 16px (de favicon `favicon.svg` is alleen het vakje).
+- **Vrije ruimte:** rondom minstens de helft van de hoogte van het vakje.
+- **Bestanden:** inline SVG (viewBox 24×24) in de topbar; `favicon.svg`.
+
 ## Kleuren
 | Rol | Hex |
 |---|---|
