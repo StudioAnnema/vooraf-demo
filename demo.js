@@ -79,6 +79,9 @@ function addMsg(html, who = "bot", cls = "") {
 const SPEEDS = { rustig: 1 };
 const speed = "rustig";
 let intake = "link";
+// Ingesloten modus: alleen de chat, voor op de website van een praktijk (via widget.js of QR-code).
+const EMBED = new URLSearchParams(location.search).has("embed");
+if (EMBED) { document.body.classList.add("embed"); intake = "web"; }
 
 async function botSay(html, cls, run) {
   const t = addMsg("typt…", "bot", "typing");
@@ -541,6 +544,7 @@ function setBrand(key) {
     b.classList.toggle("active", on); b.setAttribute("aria-checked", on);
   });
   if (current) renderDetail();
+  updateEmbedBlock(key);
   runChat();
 }
 document.querySelectorAll(".brand-btn:not(.brand-own)").forEach(b => b.onclick = () => setBrand(b.dataset.brand));
@@ -600,7 +604,7 @@ function applyOwn() {
   BRANDS.eigen = { name: own.name, short: Huisstijl.initials(own.name), phone: "het nummer van de praktijk", color: own.color, logo: own.logo };
   $("#ownSwatch").style.background = own.color; $("#ownSwatch").textContent = "";
   $("#ownBtnLabel").textContent = own.name;
-  try { localStorage.setItem(OWN_KEY, JSON.stringify({ name: own.name, site: own.site, color: own.color, logo: own.logo })); } catch {}
+  if (!EMBED) { try { localStorage.setItem(OWN_KEY, JSON.stringify({ name: own.name, site: own.site, color: own.color, logo: own.logo })); } catch {} }
   setBrand("eigen");
   return true;
 }
@@ -625,13 +629,55 @@ $("#ownShare").onclick = async () => {
   catch { ownStatus("Kopiëren lukte niet. Deellink: " + u.toString()); }
 };
 
+// ---------- Op je eigen website: insluitcode, QR-code, voorbeeldsite ----------
+const SITE_BASE = new URL(".", location.href).href;
+function embedParams() {
+  const p = new URLSearchParams({ praktijk: own.name });
+  if (own.site) p.set("site", own.site);
+  p.set("kleur", own.color.slice(1));
+  return p;
+}
+function updateEmbedBlock(key) {
+  const block = $("#embedBlock");
+  if (!block) return;
+  block.hidden = key !== "eigen";
+  if (block.hidden) return;
+  const p = embedParams();
+  const attrs = [`data-praktijk="${own.name.replace(/"/g, "&quot;")}"`, own.site ? `data-site="${own.site}"` : "", `data-kleur="${own.color.slice(1)}"`].filter(Boolean).join(" ");
+  $("#embedCode").textContent = `<script src="${SITE_BASE}widget.js"\n        ${attrs} async></script>`;
+  $("#embedTest").href = "voorbeeld-website.html?" + p.toString();
+  const qrTarget = SITE_BASE + "demo.html?embed=1&" + p.toString();
+  $("#qrTarget").textContent = qrTarget;
+  drawQr(qrTarget);
+}
+function drawQr(text) {
+  const canvas = $("#qrCanvas");
+  if (!canvas || typeof qrcode !== "function") return;
+  const qr = qrcode(0, "M"); qr.addData(text); qr.make();
+  const n = qr.getModuleCount(), quiet = 4, scale = Math.floor(480 / (n + quiet * 2));
+  canvas.width = canvas.height = (n + quiet * 2) * scale;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "#1C2826";
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (qr.isDark(r, c)) ctx.fillRect((c + quiet) * scale, (r + quiet) * scale, scale, scale);
+  const dl = $("#qrDownload");
+  dl.href = canvas.toDataURL("image/png");
+  dl.download = `vooraf-qr-${own.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}.png`;
+}
+$("#embedCopy")?.addEventListener("click", async e => {
+  const t = $("#embedCode").textContent;
+  try { await navigator.clipboard.writeText(t); e.target.textContent = "Gekopieerd ✓"; }
+  catch { const r = document.createRange(); r.selectNodeContents($("#embedCode")); getSelection().removeAllRanges(); getSelection().addRange(r); e.target.textContent = "Selecteer en kopieer"; }
+  setTimeout(() => e.target.textContent = "Kopieer code", 1800);
+});
+
 // Bij laden: eerst een deellink, anders wat eerder in deze browser is ingesteld.
 async function restoreOwn() {
   const q = new URLSearchParams(location.search);
   let saved = null;
   if (q.get("praktijk")) {
     saved = { name: q.get("praktijk").slice(0, 40), site: Huisstijl.host(q.get("site") || ""), color: /^[0-9a-f]{6}$/i.test(q.get("kleur") || "") ? "#" + q.get("kleur") : null, logo: null };
-  } else {
+  } else if (!EMBED) {
     try { saved = JSON.parse(localStorage.getItem(OWN_KEY) || "null"); } catch {}
   }
   if (!saved || !saved.name) return false;

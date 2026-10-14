@@ -205,3 +205,31 @@
 .callback { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; margin: -6px 0 18px; }
 .callback strong { display: block; font-family: var(--display); font-size: 1.02rem; }
 .callback span { color: var(--ink-soft); font-size: .95rem; }
+
+/* Op je eigen website: insluitcode en QR */
+.embed-block { margin-top: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; }
+.embed-block[hidden] { display: none; }
+.embed-intro { margin: 0; font-size: .95rem; color: var(--ink-soft); }
+.embed-intro code { font-family: var(--mono); font-size: .85em; }
+.embed-code { margin: 0; white-space: pre-wrap; word-break: break-all; font: 400 .82rem/1.5 var(--mono); background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; color: var(--ink); }
+.embed-code:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.qr-row { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 16px; align-items: start; border-top: 1px solid var(--line); padding-top: 14px; }
+.qr-row canvas { width: 120px; height: 120px; border: 1px solid var(--line); border-radius: 6px; background: #fff; image-rendering: pixelated; }
+.qr-row b { display: block; }
+.qr-row p { margin: 4px 0 10px; font-size: .92rem; color: var(--ink-soft); }
+.qr-target { word-break: break-all; font: 400 .72rem/1.4 var(--mono) !important; margin-top: 8px !important; }
+
+/* Ingesloten modus: alleen de chat, schermvullend */
+body.embed { background: #fff; }
+body.embed .topbar, body.embed .demo-intro, body.embed .controls-col, body.embed .dash,
+body.embed .disclaimer, body.embed footer, body.embed .phone-wrap > .label { display: none !important; }
+body.embed .demo-grid { display: block; max-width: none; padding: 0; margin: 0; }
+body.embed .phone-wrap { position: static; }
+body.embed .phone { border: 0; border-radius: 0; height: 100vh; height: 100dvh; min-height: 0; }
+body.embed .phone-head { padding-right: 56px; }
+
+/* Demomelding in de ingesloten bot en waarschuwing bij de insluitcode */
+.embed-demo-note { display: none; }
+body.embed .embed-demo-note { display: block; margin: 0; padding: 9px 14px; background: #FAEFD9; color: #6F4A0C; font-size: .85rem; line-height: 1.4; border-bottom: 1px solid #EBD3A3; }
+body.embed .phone { display: flex; flex-direction: column; }
+.embed-warn { margin: 0; background: #FAEFD9; border: 1px solid #EBD3A3; color: #6F4A0C; border-radius: 8px; padding: 10px 12px; font-size: .9rem; }
