@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy — Vooraf</title>
+<meta name="description" content="Hoe Vooraf patiëntgegevens beschermt: end-to-end versleuteld, alleen leesbaar voor de praktijk, binnen de EU en automatisch verwijderd.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Vooraf">
+<meta property="og:title" content="Privacy bij Vooraf">
+<meta property="og:description" content="Wij kunnen de antwoorden van je patiënten niet lezen. End-to-end versleuteld, binnen de EU, automatisch verwijderd.">
+<meta property="og:url" content="https://studioannema.github.io/vooraf-demo/privacy.html">
+<meta property="og:image" content="https://studioannema.github.io/vooraf-demo/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="nl_NL">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#F3EFE6">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@500&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+  .doc { max-width: 780px; margin: 0 auto; padding: 24px 24px 80px; }
+  .doc h1 { font-size: clamp(2.1rem, 5vw, 3.2rem); }
+  .doc h2 { font-size: clamp(1.5rem, 3vw, 1.9rem); margin-top: 56px; }
+  .status-note { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; font-size: .98rem; color: var(--ink-soft); margin: 22px 0 0; }
+  .short { display: grid; gap: 10px; margin: 28px 0 0; padding: 0; list-style: none; }
+  .short li { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--t-groen); border-radius: 8px; padding: 14px 18px; }
+  .short b { display: block; font-family: var(--display); font-size: 1.12rem; }
+  .short span { color: var(--ink-soft); font-size: .98rem; }
+  .route { list-style: none; padding: 0; margin: 20px 0 0; counter-reset: s; display: grid; gap: 8px; }
+  .route li { counter-increment: s; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; align-items: start; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .route li:last-child { border-bottom: 0; }
+  .route li::before { content: counter(s); width: 28px; height: 28px; border-radius: 6px; background: var(--ink); color: var(--paper); display: grid; place-items: center; font: 600 .9rem var(--mono); }
+  .route b { display: block; }
+  .route span { color: var(--ink-soft); }
+  .doc .check-list { margin-top: 18px; }
+  .back { display: inline-block; margin-top: 40px; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a href="index.html" class="logo" aria-label="Vooraf"><svg class="logo-mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect width="24" height="24" rx="4.8"/><path d="M6.6 12.4 10.4 17.4 17.6 6.6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="logo-word">Vooraf</span></a>
+  <nav>
+    <a href="index.html#hoe">Hoe het werkt</a>
+    <a href="index.html#doorverwijzen">Doorverwijzen</a>
+    <a href="privacy.html" aria-current="page">Privacy</a>
+  </nav>
+  <a href="demo.html" class="btn btn-small">Probeer de demo</a>
+</header>
+
+<main class="doc">
+  <p class="mono label">Privacy &amp; veiligheid</p>
+  <h1>Wij kunnen de antwoorden van je patiënten niet lezen.</h1>
+  <p class="lead">Vooraf brengt de screening van de patiënt naar jouw praktijk. Onderweg is de inhoud versleuteld met een sleutel die alleen jouw praktijk heeft.</p>
+  <p class="status-note"><b>Vooraf is in ontwikkeling.</b> Op deze pagina staan de uitgangspunten waarop we het bouwen en die we vastleggen in de verwerkersovereenkomst met elke praktijk. De demo op deze site verwerkt geen echte patiëntgegevens.</p>
+
+  <ul class="short">
+    <li><b>Versleuteld vanaf de eerste klik</b><span>De antwoorden worden al op de telefoon of computer van de patiënt versleuteld. Alleen jouw praktijk kan ze openen.</span></li>
+    <li><b>Het dossier blijft bij jou</b><span>De screening hoort in jouw EPD. Zodra je hem hebt opgehaald, verwijderen wij hem.</span></li>
+    <li><b>Binnen de EU</b><span>Onze servers en opslag staan in de Europese Unie.</span></li>
+  </ul>
+
+  <h2>Zo reist een screening</h2>
+  <ol class="route">
+    <li><div><b>De patiënt vult de screening in</b><span>Via een persoonlijke link van de praktijk of de knop op je website.</span></div></li>
+    <li><div><b>De antwoorden worden versleuteld</b><span>Op het apparaat van de patiënt, met de openbare sleutel van jouw praktijk.</span></div></li>
+    <li><div><b>Vooraf geeft het pakket door</b><span>Wij bewaren alleen het versleutelde pakket en laten je weten dat er een screening klaarstaat.</span></div></li>
+    <li><div><b>Jij opent en beoordeelt</b><span>In je eigen browser, met de sleutel van de praktijk. Daarna zet je het verslag in je EPD.</span></div></li>
+    <li><div><b>Wij verwijderen het</b><span>Direct na het ophalen, en in elk geval uiterlijk na 14 dagen.</span></div></li>
+  </ol>
+
+  <h2>Wat we praktijken toezeggen</h2>
+  <ul class="check-list">
+    <li>Een verwerkersovereenkomst met elke praktijk</li>
+    <li>Hosting en opslag binnen de EU</li>
+    <li>End-to-end versleuteling van alle antwoorden</li>
+    <li>Verwijderen na ophalen, uiterlijk na 14 dagen</li>
+    <li>Persoonlijke links die na 7 dagen verlopen</li>
+    <li>Inloggen met tweestapsverificatie</li>
+    <li>Geen trackers of advertentiecookies voor patiënten</li>
+    <li>Geen AI-dienst die patiëntgegevens leest</li>
+    <li>Melding van een datalek binnen 24 uur</li>
+    <li>Informatie voor je eigen DPIA</li>
+  </ul>
+
+  <h2>Voor patiënten</h2>
+  <p>Je antwoorden zijn alleen bedoeld voor de fysiotherapiepraktijk waar je je aanmeldt. Die praktijk is verantwoordelijk voor je gegevens en bewaart ze in je dossier. Vooraf kan ze zelf niet lezen.</p>
+  <p>Je huisarts krijgt de uitkomst alleen als je daar in de screening toestemming voor geeft. Wil je je gegevens inzien, laten aanpassen of laten verwijderen? Neem dan contact op met de praktijk.</p>
+
+  <h2>Over deze demo</h2>
+  <p>De demo werkt volledig in je browser. Wat je invult wordt niet verstuurd en niet opgeslagen op een server.</p>
+  <ul class="check-list">
+    <li>Kies je "Jouw praktijk", dan blijven naam, kleur en logo in je eigen browser bewaard.</li>
+    <li>Vul je een websiteadres in, dan gaat alleen dat adres naar icon.horse om het logo op te halen.</li>
+    <li>De lettertypen worden geladen via Google Fonts.</li>
+  </ul>
+
+  <a class="back" href="index.html">← Terug naar de homepage</a>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span><b>Vooraf</b> (werknaam) · screening voor fysiotherapiepraktijken</span>
+    <nav class="foot-links" aria-label="Footer"><a href="demo.html">Demo</a><a href="regels.html">Vragen en regels</a><a href="privacy.html">Privacy</a><a href="index.html#pilot">Pilot</a></nav>
+  </div>
+</footer>
+</body>
+</html>

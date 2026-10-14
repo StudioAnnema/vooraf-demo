@@ -5,6 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Vooraf — de screening is al gedaan</title>
 <meta name="description" content="Vooraf screent nieuwe patiënten online in de huisstijl van jouw praktijk, signaleert rode vlaggen en schrijft het conceptverslag. De fysiotherapeut beslist.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Vooraf">
+<meta property="og:title" content="Vooraf — de screening is al gedaan">
+<meta property="og:description" content="Online screening voor fysiotherapiepraktijken, in je eigen huisstijl. Rode vlaggen bovenaan, conceptverslag klaar, de fysiotherapeut beslist.">
+<meta property="og:url" content="https://studioannema.github.io/vooraf-demo/">
+<meta property="og:image" content="https://studioannema.github.io/vooraf-demo/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="nl_NL">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#F3EFE6">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,11 +25,12 @@
 <body>
 
 <header class="topbar">
-  <a href="#" class="logo" aria-label="Vooraf"><svg class="logo-mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect width="24" height="24" rx="4.8"/><path d="M6.6 12.4 10.4 17.4 17.6 6.6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="logo-word">Vooraf</span></a>
+  <a href="index.html" class="logo" aria-label="Vooraf"><svg class="logo-mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect width="24" height="24" rx="4.8"/><path d="M6.6 12.4 10.4 17.4 17.6 6.6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="logo-word">Vooraf</span></a>
   <nav>
     <a href="#hoe">Hoe het werkt</a>
     <a href="#doorverwijzen">Doorverwijzen</a>
     <a href="#privacy">Privacy</a>
+    <a href="#faq">Vragen</a>
   </nav>
   <a href="demo.html" class="btn btn-small">Probeer de demo</a>
 </header>
@@ -72,7 +84,7 @@
         <div class="flow-item">
           <p class="mono label who">Patiënt</p>
           <h3>Krijgt een link of klikt op je website</h3>
-          <p>Een korte chat in begrijpelijke taal. Stelt alleen de vragen die bij de klacht horen. Duurt zo'n 4 minuten.</p>
+          <p>Een korte chat in begrijpelijke taal. Stelt alleen de vragen die bij de klacht horen. Duurt zo'n 5 minuten.</p>
         </div>
         <div class="flow-item">
           <p class="mono label who">Vooraf</p>
@@ -128,18 +140,59 @@
       <div>
         <p class="mono label">Privacy &amp; veiligheid</p>
         <h2>Gezondheidsgegevens verdienen de strengste aanpak.</h2>
-        <p class="muted">De antwoorden van je patiënten zijn bijzondere persoonsgegevens volgens de AVG. Daar richten we Vooraf vanaf het begin op in.</p>
+        <p class="muted">De antwoorden van je patiënten zijn bijzondere persoonsgegevens volgens de AVG. Daarom versleutelen we ze al op het apparaat van de patiënt. Alleen jouw praktijk kan ze openen, wij niet.</p>
+        <p><a href="privacy.html" class="text-link">Lees hoe we patiëntgegevens beschermen →</a></p>
       </div>
       <ul class="check-list">
-        <li>Opslag en verwerking binnen de EU</li>
+        <li>End-to-end versleuteld</li>
+        <li>Alleen jouw praktijk kan de antwoorden lezen</li>
+        <li>Hosting en opslag binnen de EU</li>
         <li>Verwerkersovereenkomst per praktijk</li>
-        <li>Versleuteld opgeslagen en verstuurd</li>
-        <li>Alleen jouw praktijk ziet de antwoorden</li>
-        <li>Duidelijke bewaartermijnen</li>
+        <li>Verwijderd na ophalen, uiterlijk na 14 dagen</li>
         <li>Patiënt geeft vooraf toestemming</li>
-        <li>Vragen gecontroleerd door fysiotherapeuten</li>
+        <li>Vragen gebaseerd op de KNGF-richtlijnen</li>
         <li>De fysiotherapeut beslist, altijd</li>
       </ul>
+    </div>
+  </section>
+
+  <section class="block" id="faq">
+    <div class="wrap two-col">
+      <div>
+        <p class="mono label">Veelgestelde vragen</p>
+        <h2>Wat praktijken ons vragen.</h2>
+        <p class="muted">Staat je vraag er niet bij? Meld je aan voor de pilot, dan bespreken we het samen.</p>
+      </div>
+      <div class="faq">
+        <details>
+          <summary>Vervangt Vooraf de screening door de fysiotherapeut?</summary>
+          <p>Nee. Vooraf verzamelt de antwoorden, zet de rode vlaggen bovenaan en stelt een concept op. De fysiotherapeut beoordeelt het en stelt de conclusie vast: pluis of niet-pluis, zoals de KNGF-richtlijn Fysiotherapeutische dossiervoering vraagt.</p>
+        </details>
+        <details>
+          <summary>Waar komen de vragen en rode vlaggen vandaan?</summary>
+          <p>Uit de KNGF-richtlijnen voor lage rugpijn en LRS (2021), nekpijn (2016), artrose heup-knie (2018), enkelletsel (2006) en dossiervoering (2019). Waar geen richtlijn is, zoals bij de schouder, hebben we aangevuld en dat duidelijk gemarkeerd. Vóór we live gaan, controleren fysiotherapeuten alles. <a href="regels.html" class="text-link">Bekijk alle vragen en regels</a>.</p>
+        </details>
+        <details>
+          <summary>Werkt het met ons EPD?</summary>
+          <p>In de eerste versie kopieer je het verslag met één klik naar je EPD, of download je een PDF. Koppelingen met EPD's bouwen we op basis van wat de pilotpraktijken gebruiken.</p>
+        </details>
+        <details>
+          <summary>Kunnen patiënten zelf een afspraak maken?</summary>
+          <p>Ja, als de screening groen is. Dat kan in de vrije tijden die je in Vooraf instelt, of via je eigen online afsprakenpagina. Bij oranje, rood en spoed bel je de patiënt eerst; Vooraf vraagt daarvoor het telefoonnummer.</p>
+        </details>
+        <details>
+          <summary>En patiënten die niet digitaal vaardig zijn?</summary>
+          <p>Bellen naar de praktijk blijft gewoon mogelijk. Vooraf is een extra ingang, geen vervanging. Je kunt de screening ook samen met de patiënt invullen, aan de telefoon of in de praktijk.</p>
+        </details>
+        <details>
+          <summary>Wat kost het?</summary>
+          <p>Tijdens de pilot is Vooraf gratis. Daarna betaal je een vast bedrag per praktijk per maand. Pilotpraktijken houden een vaste korting.</p>
+        </details>
+        <details>
+          <summary>Is het veilig en AVG-proof?</summary>
+          <p>De antwoorden worden al op het apparaat van de patiënt versleuteld en alleen jouw praktijk kan ze openen. Je krijgt een verwerkersovereenkomst en we hosten binnen de EU. <a href="privacy.html" class="text-link">Lees de details</a>.</p>
+        </details>
+      </div>
     </div>
   </section>
 
@@ -170,7 +223,7 @@
 <footer>
   <div class="wrap">
     <span><b>Vooraf</b> (werknaam) · screening voor fysiotherapiepraktijken</span>
-    <span>Vooraf ondersteunt de screening. De fysiotherapeut beslist.</span>
+    <nav class="foot-links" aria-label="Footer"><a href="demo.html">Demo</a><a href="regels.html">Vragen en regels</a><a href="privacy.html">Privacy</a><a href="index.html#pilot">Pilot</a></nav>
   </div>
 </footer>
 
