@@ -97,6 +97,15 @@
           <p>Triage, samenvatting en conceptverslag staan klaar. Eén klik om het naar je EPD te kopiëren. Jij houdt de regie.</p>
         </div>
       </div>
+      <div class="channels">
+        <p class="mono label">Eén bot, meerdere ingangen</p>
+        <ul>
+          <li><b>Op je website</b><span>Een knop of chatvenster in jouw huisstijl</span></li>
+          <li><b>Persoonlijke link</b><span>Per sms, e-mail of WhatsApp na een telefoontje</span></li>
+          <li><b>QR-code</b><span>In de wachtkamer, op folders of de afsprakenkaart</span></li>
+        </ul>
+        <p class="channels-note">Elke ingang leidt naar dezelfde beveiligde screening. De vragen zelf lopen nooit via WhatsApp: die app gebruiken we alleen om de link te sturen.</p>
+      </div>
     </div>
   </section>
 
@@ -211,6 +220,20 @@
           <label>Aantal fysiotherapeuten
             <select name="grootte"><option>1 – 3</option><option>4 – 10</option><option>Meer dan 10</option></select>
           </label>
+          <label for="epd">Welk EPD gebruik je?
+            <span class="field-hint" id="epdHint">Zo weten we met welk EPD we de rechtstreekse koppeling als eerste bouwen.</span>
+            <select name="epd" id="epd" aria-describedby="epdHint">
+              <option value="" selected disabled>Kies je EPD</option>
+              <option>Intramed</option>
+              <option>FysioRoadmap</option>
+              <option>Spotonmedics</option>
+              <option>Ander EPD</option>
+              <option>Weet ik niet</option>
+            </select>
+          </label>
+          <label for="epdAnders" id="epdAndersWrap" hidden>Welk EPD?
+            <input name="epd_anders" id="epdAnders" autocomplete="off">
+          </label>
           <button class="btn" type="submit">Meld mijn praktijk aan</button>
           <p class="form-note">Dit formulier is nog een demo: er wordt niets verstuurd.</p>
           <p class="form-ok" id="formOk">Dank je! In de echte versie nemen we binnen twee werkdagen contact op.</p>
@@ -228,6 +251,11 @@
 </footer>
 
 <script>
+  const epd = document.getElementById("epd"), andersWrap = document.getElementById("epdAndersWrap");
+  epd.addEventListener("change", () => {
+    andersWrap.hidden = epd.value !== "Ander EPD";
+    document.getElementById("epdAnders").required = !andersWrap.hidden;
+  });
   document.getElementById("pilotForm").addEventListener("submit", e => {
     e.preventDefault();
     document.getElementById("formOk").style.display = "block";
