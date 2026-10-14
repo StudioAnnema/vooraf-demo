@@ -544,7 +544,7 @@ function setBrand(key) {
     b.classList.toggle("active", on); b.setAttribute("aria-checked", on);
   });
   if (current) renderDetail();
-  updateEmbedBlock(key);
+  updateSiteLink(key);
   runChat();
 }
 document.querySelectorAll(".brand-btn:not(.brand-own)").forEach(b => b.onclick = () => setBrand(b.dataset.brand));
@@ -629,47 +629,16 @@ $("#ownShare").onclick = async () => {
   catch { ownStatus("Kopiëren lukte niet. Deellink: " + u.toString()); }
 };
 
-// ---------- Op je eigen website: insluitcode, QR-code, voorbeeldsite ----------
-const SITE_BASE = new URL(".", location.href).href;
-function embedParams() {
-  const p = new URLSearchParams({ praktijk: own.name });
-  if (own.site) p.set("site", own.site);
-  p.set("kleur", own.color.slice(1));
-  return p;
+// ---------- Link naar de bot op een voorbeeldpraktijkwebsite ----------
+const BRAND_COLORS = { duinen: "#1F5F5B", oost: "#8C3B2A", beweeg: "#33407A" };
+function updateSiteLink(key) {
+  const link = $("#siteDemoLink");
+  if (!link) return;
+  const p = new URLSearchParams({ praktijk: brand.name });
+  if (key === "eigen" && own.site) p.set("site", own.site);
+  p.set("kleur", (key === "eigen" ? own.color : BRAND_COLORS[key] || "#1F5F5B").slice(1));
+  link.href = "voorbeeld-website.html?" + p.toString();
 }
-function updateEmbedBlock(key) {
-  const block = $("#embedBlock");
-  if (!block) return;
-  block.hidden = key !== "eigen";
-  if (block.hidden) return;
-  const p = embedParams();
-  const attrs = [`data-praktijk="${own.name.replace(/"/g, "&quot;")}"`, own.site ? `data-site="${own.site}"` : "", `data-kleur="${own.color.slice(1)}"`].filter(Boolean).join(" ");
-  $("#embedCode").textContent = `<script src="${SITE_BASE}widget.js"\n        ${attrs} async></script>`;
-  $("#embedTest").href = "voorbeeld-website.html?" + p.toString();
-  const qrTarget = SITE_BASE + "demo.html?embed=1&" + p.toString();
-  $("#qrTarget").textContent = qrTarget;
-  drawQr(qrTarget);
-}
-function drawQr(text) {
-  const canvas = $("#qrCanvas");
-  if (!canvas || typeof qrcode !== "function") return;
-  const qr = qrcode(0, "M"); qr.addData(text); qr.make();
-  const n = qr.getModuleCount(), quiet = 4, scale = Math.floor(480 / (n + quiet * 2));
-  canvas.width = canvas.height = (n + quiet * 2) * scale;
-  const ctx = canvas.getContext("2d");
-  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = "#1C2826";
-  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (qr.isDark(r, c)) ctx.fillRect((c + quiet) * scale, (r + quiet) * scale, scale, scale);
-  const dl = $("#qrDownload");
-  dl.href = canvas.toDataURL("image/png");
-  dl.download = `vooraf-qr-${own.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}.png`;
-}
-$("#embedCopy")?.addEventListener("click", async e => {
-  const t = $("#embedCode").textContent;
-  try { await navigator.clipboard.writeText(t); e.target.textContent = "Gekopieerd ✓"; }
-  catch { const r = document.createRange(); r.selectNodeContents($("#embedCode")); getSelection().removeAllRanges(); getSelection().addRange(r); e.target.textContent = "Selecteer en kopieer"; }
-  setTimeout(() => e.target.textContent = "Kopieer code", 1800);
-});
 
 // Bij laden: eerst een deellink, anders wat eerder in deze browser is ingesteld.
 async function restoreOwn() {

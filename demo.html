@@ -60,6 +60,10 @@
       <div class="chat-input" id="chatInput"></div>
       <div class="phone-foot">Beveiligd · gegevens alleen voor <span id="practiceName2">Fysio De Duinen</span></div>
     </div>
+    <a class="site-demo-link" id="siteDemoLink" href="voorbeeld-website.html?praktijk=Fysio+De+Duinen&amp;kleur=1F5F5B" target="_blank" rel="noopener">
+      <span><b>Bekijk de bot op een praktijkwebsite</b><small>Zo verschijnt Vooraf op de site van de praktijk</small></span>
+      <span aria-hidden="true">↗</span>
+    </a>
   </section>
 
   <!-- PRAKTIJK -->
@@ -90,25 +94,6 @@
         </div>
         <p class="own-note">Je logo en gegevens blijven in je eigen browser. Alleen het websiteadres gaat naar een logodienst (icon.horse). Een geüpload logo zit niet in de deellink.</p>
       </form>
-    <div class="embed-block" id="embedBlock" hidden>
-      <p class="mono label">Op je eigen website</p>
-      <p class="embed-intro">Plak deze code op je website, vlak voor <code>&lt;/body&gt;</code>. Er verschijnt dan rechtsonder een knop die de bot opent in jouw huisstijl.</p>
-      <p class="embed-warn"><b>Alleen om te testen.</b> Dit is de demoversie: antwoorden worden niet verstuurd. Zet hem niet op je website voor echte patiënten, want die verwachten dat je ze terugbelt.</p>
-      <pre class="embed-code" id="embedCode" tabindex="0"></pre>
-      <div class="own-actions">
-        <button class="btn btn-small" type="button" id="embedCopy">Kopieer code</button>
-        <a class="btn btn-small btn-ghost" id="embedTest" href="voorbeeld-website.html" target="_blank" rel="noopener">Bekijk op een voorbeeldsite ↗</a>
-      </div>
-      <div class="qr-row">
-        <canvas id="qrCanvas" width="160" height="160" aria-label="QR-code naar de screening"></canvas>
-        <div>
-          <b>QR-code voor de wachtkamer</b>
-          <p>Patiënten scannen de code en starten de screening op hun telefoon. In de demo: alleen om zelf te testen.</p>
-          <a class="btn btn-small btn-ghost" id="qrDownload" href="#" download>Download QR-code</a>
-          <p class="qr-target" id="qrTarget"></p>
-        </div>
-      </div>
-    </div>
       <div class="ctrl-row">
         <div>
           <p class="mono label">Patiënt komt binnen via</p>
@@ -173,7 +158,6 @@
 
 <script src="screening-data.js"></script>
 <script src="huisstijl.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="demo.js"></script>
 </body>
 </html>

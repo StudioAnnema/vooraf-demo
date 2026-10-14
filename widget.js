@@ -1,8 +1,4 @@
-/* Vooraf — knop + chatvenster voor op de website van een praktijk (demoversie).
-   Gebruik:
-   <script src="https://studioannema.github.io/vooraf-demo/widget.js"
-           data-praktijk="Naam praktijk" data-site="praktijk.nl" data-kleur="1F5F5B" async></script>
-   Optioneel: data-tekst="Start je screening". Er worden geen gegevens verstuurd. */
+/* Vooraf — knop + chatvenster voor de voorbeeldpraktijkwebsite (demoversie). Er worden geen gegevens verstuurd. */
 (function () {
   "use strict";
   var script = document.currentScript;
