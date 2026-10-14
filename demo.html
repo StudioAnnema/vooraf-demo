@@ -86,6 +86,23 @@
           </div>
         </div>
       </div>
+      <div class="ctrl-row">
+        <p class="mono label">Agenda van de praktijk</p>
+        <div class="seg" id="agendaSeg">
+          <button class="active" data-agenda="vooraf">Vrije tijden in Vooraf</button>
+          <button data-agenda="extern">Eigen afsprakenpagina</button>
+        </div>
+        <div class="agenda-opts">
+          <label class="agenda-field">Duur intake
+            <select id="intakeMin"><option value="30">30 minuten</option><option value="45" selected>45 minuten</option><option value="60">60 minuten</option></select>
+          </label>
+          <label class="agenda-field" id="agendaExtern" hidden>Link naar je afsprakenpagina
+            <input id="agendaUrl" inputmode="url" placeholder="bijv. jouwpraktijk.nl/afspraak">
+          </label>
+        </div>
+        <p class="agenda-note" id="agendaNote" aria-live="polite"></p>
+        <p class="agenda-note">Alleen bij <b>groen</b> plant de patiënt zelf. Bij oranje, rood en spoed belt de praktijk eerst.</p>
+      </div>
       <p class="mono label" style="margin-top:22px">Speel een voorbeeld af</p>
       <div class="scenario-list">
         <button class="scenario lvl-groen" data-scenario="groen"><span class="sc-text"><b>Rugpijn na tillen</b><small><span class="sc-lvl">Groen</span> · Onderrug · geen alarmsignalen</small></span><span class="sc-arrow" aria-hidden="true">→</span></button>

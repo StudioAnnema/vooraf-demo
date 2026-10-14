@@ -19,7 +19,11 @@ const TERMIJN_TEXT = {
   "2 werkdagen": "binnen 2 werkdagen",
   regulier: "via een gewone afspraak",
 };
-function routeAction(r) {
+function routeAction(r, it) {
+  if (r.level === "groen" && it) {
+    if (it.slot) return `Intake ingepland op ${it.slot} (door patiënt zelf gekozen).`;
+    if (it.extern) return "Patiënt is doorgestuurd naar de online afsprakenpagina van de praktijk om zelf een intake te plannen.";
+  }
   if (r.level === "rood") return `Patiënt is geadviseerd ${TERMIJN_TEXT[r.termijn]} contact op te nemen met de huisarts. Conceptbrief (DTF-bericht) staat klaar. Praktijk belt patiënt vandaag na.`;
   if (r.level === "spoed") return r.call112
     ? "Patiënt is geadviseerd direct 112 te bellen. Praktijk heeft een sms-melding gekregen en belt na."
@@ -36,7 +40,7 @@ function patientOutcome(r, a) {
     `Dank je wel, ${n}. Door een paar van je antwoorden is het verstandig dat je <b>eerst je huisarts</b> bezoekt, <b>${TERMIJN_TEXT[r.termijn]}</b>. Dit is een voorzorg: de huisarts kan onderzoeken doen die een fysiotherapeut niet kan.<br><br>Een fysiotherapeut van ${p} belt je vandaag om het toe te lichten.` };
   if (r.level === "oranje") return { cls: "", text:
     `Dank je wel, ${n}! Een fysiotherapeut van ${p} bekijkt je antwoorden vandaag en <b>belt je</b> om samen de beste volgende stap te kiezen.` };
-  return { cls: "ok", text: `Dank je wel, ${n}! Je klachten passen goed bij fysiotherapie. Kies hieronder een moment voor je eerste afspraak.` };
+  return { cls: "ok", text: `Dank je wel, ${n}! Je klachten passen goed bij fysiotherapie. ${agendaMode === "extern" && agendaUrl ? "Je kunt nu zelf je eerste afspraak plannen." : "Kies hieronder een dag en tijd voor je eerste afspraak."}` };
 }
 
 // ---------- Helpers ----------
@@ -130,10 +134,22 @@ function askUI(q) {
     } else {
       const f = document.createElement("form");
       const today = new Date().toISOString().slice(0, 10);
-      f.innerHTML = q.type === "date"
+      f.innerHTML = q.type === "tel"
+        ? `<input type="tel" inputmode="tel" autocomplete="tel" placeholder="${esc(q.ph || "")}" aria-label="Telefoonnummer" required><button type="submit">Stuur</button>`
+        : q.type === "date"
         ? `<input type="date" max="${today}" min="1910-01-01" aria-label="${esc(q.q)}" required><button type="submit">Stuur</button>`
         : `<input type="text" placeholder="${esc(q.ph || "")}" aria-label="${esc(q.q)}" required><button type="submit">Stuur</button>`;
-      f.onsubmit = e => { e.preventDefault(); const v = f.querySelector("input").value.trim(); if (v) resolve(v); };
+      f.onsubmit = e => {
+        e.preventDefault();
+        const inp = f.querySelector("input"), v = inp.value.trim();
+        if (q.type === "tel" && !validTel(v)) {
+          inp.setCustomValidity("Vul een geldig telefoonnummer in, bijv. 06 12345678");
+          inp.reportValidity();
+          inp.oninput = () => inp.setCustomValidity("");
+          return;
+        }
+        if (v) resolve(v);
+      };
       input.appendChild(f);
       if (!auto) f.querySelector("input").focus({ preventScroll: true });
     }
@@ -144,6 +160,7 @@ function autoValue(q) {
   if (auto[q.id] !== undefined) return auto[q.id];
   if (q.type === "multi") return q.options.includes(NONE) ? [NONE] : [];
   if (q.type === "single") return q.options[0];
+  if (q.type === "tel") return "06 12345678";
   return "—";
 }
 
@@ -178,7 +195,7 @@ async function runChat(preset = null) {
     if (intake === "link") {
       // Patiënt kreeg een persoonlijke link van de praktijk: naam en geboortedatum zijn al bekend.
       const pt = preset ? { naam: preset.naam, geb: preset.geb } : { naam: "Alex Jansen", geb: "1988-07-21" };
-      Object.assign(a, pt, { age: ageFrom(pt.geb), _known: true });
+      Object.assign(a, pt, { age: ageFrom(pt.geb), _known: true, _knownTel: (preset && preset.tel) || "06 1234 5678" });
       await botSay(`Hoi ${esc(first(a.naam))}! 👋 Fijn dat je je hebt aangemeld bij <b>${brand.name}</b>. Ik ben de digitale assistent van de praktijk.`, "", run);
       await botSay("Ik stel je wat vragen over je klacht, zodat de fysiotherapeut je meteen goed kan helpen. Het duurt ongeveer 5 minuten, en je kunt gewoon op de knoppen tikken.", "", run);
     } else {
@@ -192,7 +209,7 @@ async function runChat(preset = null) {
       const ok = await answer({ id: "check", type: "single", options: ["Ja, dat klopt", "Nee"] }, run);
       if (ok !== "Ja, dat klopt") {
         await botSay("Geen probleem, dan vraag ik je gegevens even opnieuw.", "", run);
-        delete a.naam; delete a.geb; a._known = false;
+        delete a.naam; delete a.geb; delete a._knownTel; a._known = false;
       }
     }
 
@@ -236,18 +253,67 @@ async function runChat(preset = null) {
     setProgress(4, "", true);
     const out = patientOutcome(r, a);
     await botSay(out.text, out.cls, run);
-    let slot = null;
+    let slot = null, extern = false;
     if (r.level === "groen") {
-      const slots = ["di 14 okt · 09:30", "di 14 okt · 16:15", "wo 15 okt · 11:00"];
-      slot = await answer({ id: "slot", type: "single", options: slots }, run);
-      await botSay(`Top, je afspraak staat op <b>${slot}</b>. Je krijgt een bevestiging per mail. Tot dan! 💪`, "", run);
+      if (agendaMode === "extern" && agendaUrl) {
+        extern = true;
+        await botSay(`Plan je intake in onze online agenda:<br><a class="chat-link" href="${esc(agendaUrl)}" target="_blank" rel="noopener noreferrer">Open de agenda van ${esc(brand.name)} ↗</a>`, "", run);
+      } else {
+        const days = agendaDays();
+        const day = await answer({ id: "dag", type: "single", options: days.map(d => d.label) }, run);
+        await botSay(`Op ${day} zijn deze tijden nog vrij (intake van ${intakeMin} minuten):`, "", run);
+        const tijd = await answer({ id: "tijd", type: "single", options: days.find(d => d.label === day).times }, run);
+        slot = `${day} · ${tijd}`;
+        await botSay(`Top, je afspraak staat op <b>${slot}</b>. Je krijgt een bevestiging per mail.`, "", run);
+      }
     }
-    addToInbox({ answers: a, r, time: stamp(), slot, fresh: true });
+    await contactBlock(r, a, run);
+    if (r.level === "groen") await botSay("Tot snel! 💪", "", run);
+    addToInbox({ answers: a, r, time: stamp(), slot, extern, fresh: true });
   } catch (e) {
     if (e !== "cancel") console.error(e);
   } finally {
     if (run === runId) auto = null;
   }
+}
+
+// ---------- Agenda ----------
+let agendaMode = "vooraf", agendaUrl = "", intakeMin = 45;
+const TIME_SETS = [["08:30", "10:15", "13:45", "16:30"], ["09:00", "11:30", "15:00"], ["08:00", "12:15", "14:30", "17:15"]];
+function agendaDays() {
+  const out = [], d = new Date();
+  while (out.length < 3) {
+    d.setDate(d.getDate() + 1);
+    if (d.getDay() === 0 || d.getDay() === 6) continue;
+    const label = d.toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "short" }).replace(".", "");
+    out.push({ label, times: TIME_SETS[out.length] });
+  }
+  return out;
+}
+
+// ---------- Terugbellen ----------
+function validTel(v) { const digits = v.replace(/\D/g, ""); return /^[+0-9][0-9 ()-]*$/.test(v.trim()) && digits.length >= 10 && digits.length <= 13; }
+async function contactBlock(r, a, run) {
+  if (r.level === "groen") {
+    await botSay("Wil je dat de fysiotherapeut je vóór de afspraak even belt? Dat mag altijd.", "", run);
+    a.bellen = await answer({ id: "bellen", type: "single", options: ["Ja, graag", "Nee, niet nodig"] }, run);
+    if (a.bellen !== "Ja, graag") return;
+  } else {
+    a.bellen = "Ja (nodig)";
+  }
+  if (a._knownTel) {
+    await botSay(`Kunnen we je bereiken op <b>${esc(a._knownTel)}</b>?`, "", run);
+    const ok = await answer({ id: "telok", type: "single", options: ["Ja, dat klopt", "Nee, ander nummer"] }, run);
+    if (ok === "Ja, dat klopt") a.tel = a._knownTel;
+  }
+  if (!a.tel) {
+    await botSay("Op welk telefoonnummer kan de fysiotherapeut je bellen?", "", run);
+    a.tel = await answer({ id: "tel", type: "tel", ph: "Bijv. 06 12345678" }, run);
+  }
+  if (r.level === "spoed") { await botSay("Dank je. Bel nu eerst zelf, zoals hierboven staat. De praktijk belt je daarna.", "", run); return; }
+  await botSay("Wanneer ben je het best bereikbaar?", "", run);
+  a.bereik = await answer({ id: "bereik", type: "single", options: ["Maakt niet uit", "Ochtend", "Middag", "Eind van de middag"] }, run);
+  await botSay(r.level === "groen" ? "Genoteerd, de fysiotherapeut belt je." : "Genoteerd. Je wordt vandaag gebeld.", "", run);
 }
 
 // ---------- Inbox & detail ----------
@@ -298,10 +364,11 @@ function renderDetail() {
       <div>
         <span class="status ${r.level}">${route.label} · ${route.title}</span>
         <h3>${esc(a.naam)}, ${esc(a.age)} jaar</h3>
-        <span class="muted">Screening ingevuld ${it.time}${it.slot ? ` · afspraak ${esc(it.slot)}` : ""}${a._stopped ? " · vragenlijst gestopt na alarmsignaal" : ""}</span>
+        <span class="muted">Screening ingevuld ${it.time}${it.slot ? ` · afspraak ${esc(it.slot)}` : it.extern ? " · plant zelf via online agenda" : ""}${a._stopped ? " · vragenlijst gestopt na alarmsignaal" : ""}</span>
       </div>
     </div>
-    <div class="route-box ${r.level}"><strong>Doorverwijzing</strong>${esc(routeAction(r))}</div>
+    <div class="route-box ${r.level}"><strong>Doorverwijzing</strong>${esc(routeAction(r, it))}</div>
+    ${a.tel ? `<div class="callback"><div><strong>📞 Terugbellen${r.level === "groen" ? " (op verzoek van patiënt)" : ""}</strong><span>${esc(a.tel)}${a.bereik ? " · bereikbaar: " + esc(a.bereik.toLowerCase()) : ""}</span></div><a class="btn btn-small" href="tel:${esc(a.tel.replace(/[^+0-9]/g, ""))}">Bel patiënt</a></div>` : ""}
     <dl class="facts">
       ${fact("Hulpvraag", a.doel)}${fact("Klacht", a.klacht)}${fact("Voorlopige indeling", r.classification)}${fact("Duur", a.duur)}
       ${fact("Ontstaan", a.ontstaan)}${fact("Pijn (NPRS)", a.pijn && a.pijn + "/10")}${fact("Beloop", a.beloop)}
@@ -414,7 +481,8 @@ Voorlopige indeling: ${r.classification}
 CONCLUSIE SCREENING: ${route.conclusie}
 Indicatie verder fysiotherapeutisch onderzoek: ${route.indicatie}
 Toestemming overleg/DTF-bericht huisarts: ${a.toestemming || "niet gevraagd (spoed)"}
-Advies/vervolg: ${routeAction(r)}
+Terugbelverzoek: ${a.tel ? a.tel + (a.bereik ? " (" + a.bereik.toLowerCase() + ")" : "") : "nee"}
+Advies/vervolg: ${routeAction(r, it)}
 
 — Opgesteld door Vooraf op basis van de antwoorden van patiënt.
   Te controleren en aan te vullen door de behandelend fysiotherapeut.`;
@@ -429,9 +497,9 @@ const PRESETS = {
   enkel: { naam: "Emma Hendriks", geb: "2003-08-09", regio: "Enkel of voet", klacht: "Enkel verzwikt bij hockey", duur: "Korter dan 1 week", ontstaan: "Na een ongeluk, val of sportblessure", trauma: "Licht (bijv. struikelen, verzwikken)", beloop: "Het blijft gelijk", pijn: "7", e_lopen: "Nee", e_druk: "Ja", adl: "Heel veel", werk: "Ja, vooral zittend of licht werk", doel: "Weer hockeyen", huisarts: "dr. Smit, Leiden" },
 };
 const BACKLOG = [
-  { naam: "Ingrid Smit", geb: "1958-04-11", regio: "Knie", klacht: "Stijve, pijnlijke knie bij traplopen", duur: "Langer dan 3 maanden", ontstaan: "Vanzelf, zonder duidelijke reden", beloop: "Het wisselt", pijn: "5", k_stijf: "Ja, korter dan 30 minuten", eerder: "Ja, eerder", adl: "Behoorlijk", werk: "Nee / niet van toepassing", doel: "Weer fietsen met mijn kleinkinderen", huisarts: "dr. Bakker, Noordwijk", toestemming: "Ja", slot: "ma 13 okt · 14:00", mins: 95 },
-  { naam: "Willem Kok", geb: "1953-09-18", regio: "Schouder", klacht: "Pijn en stijfheid in beide schouders", duur: "1 tot 6 weken", ontstaan: "Vanzelf, zonder duidelijke reden", beloop: "Het wordt erger", pijn: "6", s_pmr: "Ja", alg: ["Erg moe of algemeen ziek"], adl: "Heel veel", werk: "Nee / niet van toepassing", doel: "'s Ochtends weer zelf mijn jas aantrekken", huisarts: "dr. Visser, Katwijk", mins: 210 },
-  { naam: "Youssef El Amrani", geb: "1981-02-05", regio: "Nek", klacht: "Stijve nek na lange dagen achter de laptop", duur: "1 tot 6 weken", ontstaan: "Na tillen, een verkeerde beweging of overbelasting", beloop: "Het blijft gelijk", pijn: "4", adl: "Behoorlijk", werk: "Ja, vooral zittend of licht werk", angst: "Een beetje", doel: "Weer zonder hoofdpijn werken", huisarts: "dr. Smit, Leiden", toestemming: "Ja", slot: "di 14 okt · 08:45", mins: 1440 },
+  { naam: "Ingrid Smit", geb: "1958-04-11", regio: "Knie", klacht: "Stijve, pijnlijke knie bij traplopen", duur: "Langer dan 3 maanden", ontstaan: "Vanzelf, zonder duidelijke reden", beloop: "Het wisselt", pijn: "5", k_stijf: "Ja, korter dan 30 minuten", eerder: "Ja, eerder", adl: "Behoorlijk", werk: "Nee / niet van toepassing", doel: "Weer fietsen met mijn kleinkinderen", huisarts: "dr. Bakker, Noordwijk", toestemming: "Ja", slotAt: [0, 2], bellen: "Nee, niet nodig", mins: 95 },
+  { naam: "Willem Kok", geb: "1953-09-18", regio: "Schouder", klacht: "Pijn en stijfheid in beide schouders", duur: "1 tot 6 weken", ontstaan: "Vanzelf, zonder duidelijke reden", beloop: "Het wordt erger", pijn: "6", s_pmr: "Ja", alg: ["Erg moe of algemeen ziek"], adl: "Heel veel", werk: "Nee / niet van toepassing", doel: "'s Ochtends weer zelf mijn jas aantrekken", huisarts: "dr. Visser, Katwijk", bellen: "Ja (nodig)", tel: "071 512 3344", bereik: "Middag", mins: 210 },
+  { naam: "Youssef El Amrani", geb: "1981-02-05", regio: "Nek", klacht: "Stijve nek na lange dagen achter de laptop", duur: "1 tot 6 weken", ontstaan: "Na tillen, een verkeerde beweging of overbelasting", beloop: "Het blijft gelijk", pijn: "4", adl: "Behoorlijk", werk: "Ja, vooral zittend of licht werk", angst: "Een beetje", doel: "Weer zonder hoofdpijn werken", huisarts: "dr. Smit, Leiden", toestemming: "Ja", slotAt: [1, 0], bellen: "Ja, graag", tel: "06 4821 7730", bereik: "Ochtend", mins: 1440 },
 ];
 
 function fill(p) {
@@ -446,7 +514,8 @@ function fill(p) {
 }
 
 function seedInbox() {
-  items = BACKLOG.map(b => { const a = fill(b); return { answers: a, r: evaluate(a), time: stamp(b.mins), slot: b.slot || null }; });
+  const days = agendaDays();
+  items = BACKLOG.map(b => { const a = fill(b); const slot = b.slotAt ? `${days[b.slotAt[0]].label} · ${days[b.slotAt[0]].times[b.slotAt[1]]}` : null; return { answers: a, r: evaluate(a), time: stamp(b.mins), slot }; });
   renderInbox();
   select(0);
 }
@@ -585,6 +654,14 @@ function segment(id, attr, set) {
   });
 }
 segment("intakeSeg", "intake", v => { intake = v; runChat(); });
+segment("agendaSeg", "agenda", v => { agendaMode = v; $("#agendaExtern").hidden = v !== "extern"; if (v === "extern") $("#agendaUrl").focus(); });
+$("#agendaUrl").addEventListener("change", e => {
+  const v = e.target.value.trim();
+  const ok = /^(https?:\/\/)?[a-z0-9-]+(\.[a-z0-9-]+)+([/?#]\S*)?$/i.test(v);
+  agendaUrl = ok ? (/^https?:/i.test(v) ? v : "https://" + v) : "";
+  $("#agendaNote").textContent = v && !ok ? "Dat lijkt geen geldige link." : agendaUrl ? "Bij groen krijgt de patiënt een knop naar deze pagina." : "";
+});
+$("#intakeMin").addEventListener("change", e => { intakeMin = +e.target.value; });
 document.querySelectorAll("[data-scenario]").forEach(b => b.onclick = () => {
   // Alleen op smalle schermen naar de telefoon scrollen; op desktop staat hij al in beeld.
   if (matchMedia("(max-width: 880px)").matches) document.getElementById("phone").scrollIntoView({ behavior: "smooth", block: "start" });

@@ -192,3 +192,16 @@
 .demo-intro { padding-top: 8px; padding-bottom: 18px; }
 .demo-intro h1 { font-size: clamp(1.9rem, 3.2vw, 2.6rem); margin-bottom: .3em; }
 .demo-intro .lead { font-size: 1.08rem; }
+
+/* Agenda-instelling en terugbelverzoek */
+.agenda-opts { display: grid; gap: 10px; margin-top: 10px; }
+.agenda-field { display: grid; gap: 5px; font-weight: 600; font-size: .92rem; }
+.agenda-field[hidden] { display: none; }
+.agenda-field select, .agenda-field input { font: 400 1rem var(--body); padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--ink); }
+.agenda-field select:focus-visible, .agenda-field input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.agenda-note { margin: 8px 0 0; font-size: .85rem; color: var(--ink-soft); }
+.agenda-note:empty { display: none; }
+.chat-link { display: inline-block; margin-top: 8px; background: var(--brand); color: #fff; text-decoration: none; font-weight: 600; padding: 9px 14px; border-radius: 18px; }
+.callback { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; margin: -6px 0 18px; }
+.callback strong { display: block; font-family: var(--display); font-size: 1.02rem; }
+.callback span { color: var(--ink-soft); font-size: .95rem; }
